@@ -148,12 +148,16 @@
   </div>
 </div>
 <script>
-  const DOGRU_SIFRE = "Icra2026!Sakarya";
-  if(sessionStorage.getItem("icra-girisli")==="evet"){document.getElementById("password-gate").style.display="none";}
+  const DOGRU_SIFRE = "TahaGenc-1823";
+  const GIRIS_SURESI = 15 * 24 * 60 * 60 * 1000; // 15 gün (milisaniye)
+  const girisZamani = localStorage.getItem("icra-giris-zamani");
+  if(girisZamani && (Date.now() - parseInt(girisZamani)) < GIRIS_SURESI){
+    document.getElementById("password-gate").style.display="none";
+  }
   function sifreKontrol(){
     const val=document.getElementById("pw-input").value;
     if(val===DOGRU_SIFRE){
-      sessionStorage.setItem("icra-girisli","evet");
+      localStorage.setItem("icra-giris-zamani", Date.now().toString());
       document.getElementById("password-gate").style.display="none";
     } else {
       document.getElementById("pw-error").style.display="block";
