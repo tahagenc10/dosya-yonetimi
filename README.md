@@ -1,1 +1,1 @@
-# icra-takip nas
+# icra-takip
