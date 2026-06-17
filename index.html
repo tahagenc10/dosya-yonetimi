@@ -137,6 +137,29 @@
   </style>
 </head>
 <body>
+  <div id="password-gate" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);display:flex;align-items:center;justify-content:center;z-index:9999;">
+  <div style="background:#fff;border-radius:16px;padding:40px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
+    <div style="font-size:40px;margin-bottom:16px;">⚖️</div>
+    <h2 style="font-size:18px;color:#1e293b;margin-bottom:8px;">İcra Takip Sistemi</h2>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:20px;">Devam etmek için şifre gir</p>
+    <input type="password" id="pw-input" placeholder="Şifre" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')sifreKontrol()" />
+    <button onclick="sifreKontrol()" style="width:100%;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;">Giriş Yap</button>
+    <p id="pw-error" style="color:#e85d4a;font-size:13px;margin-top:10px;display:none;">❌ Yanlış şifre, tekrar dene</p>
+  </div>
+</div>
+<script>
+  const DOGRU_SIFRE = "Icra2026!Sakarya";
+  if(sessionStorage.getItem("icra-girisli")==="evet"){document.getElementById("password-gate").style.display="none";}
+  function sifreKontrol(){
+    const val=document.getElementById("pw-input").value;
+    if(val===DOGRU_SIFRE){
+      sessionStorage.setItem("icra-girisli","evet");
+      document.getElementById("password-gate").style.display="none";
+    } else {
+      document.getElementById("pw-error").style.display="block";
+    }
+  }
+</script>
 <div class="header">
   <div class="header-inner">
     <div class="header-top">
