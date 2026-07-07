@@ -137,6 +137,34 @@
     .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:999;animation:slideIn 0.3s ease;}
     @keyframes slideIn{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
     @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.col-span-2{grid-column:1;}.detay-grid{grid-template-columns:1fr;}.header{padding:16px;}}
+    /* İstatistik */
+    .ist-title{font-size:19px;font-weight:800;color:#1e293b;margin-bottom:4px;}
+    .ist-sub{font-size:13px;color:#94a3b8;margin-bottom:18px;}
+    .ist-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}
+    .ist-kpi{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:14px 16px;}
+    .ist-kpi .k-lbl{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.04em;text-transform:uppercase;}
+    .ist-kpi .k-val{font-size:20px;font-weight:800;margin-top:5px;}
+    .ist-sec-title{font-size:13px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin:22px 0 12px;}
+    .ist-oran-wrap{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:16px;margin-bottom:6px;}
+    .ist-oran-bar{height:14px;border-radius:8px;background:#e2e8f0;overflow:hidden;margin-top:8px;}
+    .ist-oran-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:8px;transition:width .5s;}
+    .ist-stage{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+    .ist-stage .s-lbl{width:96px;font-size:12.5px;font-weight:600;color:#475569;flex-shrink:0;}
+    .ist-stage .s-track{flex:1;height:22px;background:#f1f5f9;border-radius:6px;overflow:hidden;}
+    .ist-stage .s-fill{height:100%;border-radius:6px;min-width:2px;transition:width .5s;}
+    .ist-stage .s-cnt{width:34px;text-align:right;font-size:13px;font-weight:700;color:#334155;flex-shrink:0;}
+    .ist-chart{display:flex;align-items:flex-end;gap:10px;overflow-x:auto;padding:10px 2px 4px;border:1px solid #eef2f7;border-radius:12px;background:#f8fafc;}
+    .ist-col{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:52px;flex-shrink:0;}
+    .ist-bars{display:flex;align-items:flex-end;gap:4px;height:150px;}
+    .ist-bar{width:16px;border-radius:4px 4px 0 0;transition:height .5s;}
+    .ist-bar.t{background:linear-gradient(180deg,#22c55e,#16a34a);}
+    .ist-bar.v{background:linear-gradient(180deg,#eab308,#d4a017);}
+    .ist-col-lbl{font-size:11px;font-weight:600;color:#64748b;white-space:nowrap;}
+    .ist-legend{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12px;color:#475569;}
+    .ist-legend span{display:flex;align-items:center;gap:6px;}
+    .ist-dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+    .ist-empty{text-align:center;color:#94a3b8;padding:24px;font-size:13px;}
+    @media(max-width:600px){.ist-kpi-grid{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -175,6 +203,7 @@
         <p id="header-stats">Yükleniyor...</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-yedek" onclick="openIstatistik()">📊 İstatistik</button>
         <button class="btn-yedek" onclick="disaAktar()">⬇️ Yedek Al</button>
         <button class="btn-yeni" onclick="openYeni()">+ Yeni Dosya</button>
       </div>
@@ -258,6 +287,7 @@
           <div class="vekalet-list" id="tahsil-list"></div>
           <div class="vekalet-ekle">
             <input id="tahsil-input" type="number" placeholder="Tutar (TL)" />
+            <input id="tahsil-tarih" type="date" title="Tahsilat tarihi" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa" />
             <input id="tahsil-aciklama" placeholder="Açıklama (opsiyonel)" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa;flex:1.5" />
             <button type="button" class="btn-vekalet-ekle" onclick="tahsilEkle()">+ Ekle</button>
           </div>
@@ -281,6 +311,7 @@
           <div class="vekalet-list" id="vekalet-list"></div>
           <div class="vekalet-ekle">
             <input id="vekalet-input" type="number" placeholder="Tutar (TL)" />
+            <input id="vekalet-tarih" type="date" title="Vekalet tarihi" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa" />
             <input id="vekalet-aciklama" placeholder="Açıklama (opsiyonel)" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa;flex:1.5" />
             <button type="button" class="btn-vekalet-ekle" onclick="vekaletEkle()">+ Ekle</button>
           </div>
@@ -319,6 +350,13 @@
 <div class="overlay" id="detay-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-body" id="detay-icerik"></div>
+  </div>
+</div>
+
+<!-- İstatistik Modal -->
+<div class="overlay" id="istatistik-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-body" id="istatistik-icerik"></div>
   </div>
 </div>
 
@@ -448,12 +486,12 @@ function toggleKapali(){
     toast("✅ Dosya kapalı olarak işaretlendi, kaydetmeyi unutma!");
   }
 }
-function vekaletEkle(){const t=document.getElementById("vekalet-input").value;const a=document.getElementById("vekalet-aciklama").value;if(!t)return;vekaletler.push({tutar:parseFloat(t),aciklama:a});document.getElementById("vekalet-input").value="";document.getElementById("vekalet-aciklama").value="";renderVekaletList();}
+function vekaletEkle(){const t=document.getElementById("vekalet-input").value;const a=document.getElementById("vekalet-aciklama").value;const tar=document.getElementById("vekalet-tarih").value;if(!t)return;vekaletler.push({tutar:parseFloat(t),aciklama:a,tarih:tar||bugun()});document.getElementById("vekalet-input").value="";document.getElementById("vekalet-aciklama").value="";document.getElementById("vekalet-tarih").value=bugun();renderVekaletList();}
 function vekaletSil(i){vekaletler.splice(i,1);renderVekaletList();}
-function renderVekaletList(){const top=vekaletler.reduce((s,v)=>s+(v.tutar||0),0);document.getElementById("vekalet-list").innerHTML=vekaletler.map((v,i)=>`<div class="vekalet-item"><span>${v.aciklama||"Vekalet ücreti"}</span><small>${formatCurrency(v.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="vekaletSil(${i})">✕</button></div>`).join("")+(vekaletler.length>0?`<div style="text-align:right;font-size:12px;color:#d4a017;font-weight:700;padding:4px 2px">Toplam: ${formatCurrency(top)}</div>`:"");}
-function tahsilEkle(){const t=document.getElementById("tahsil-input").value;const a=document.getElementById("tahsil-aciklama").value;if(!t)return;tahsilatlar.push({tutar:parseFloat(t),aciklama:a});document.getElementById("tahsil-input").value="";document.getElementById("tahsil-aciklama").value="";renderTahsilList();}
+function renderVekaletList(){const top=vekaletler.reduce((s,v)=>s+(v.tutar||0),0);document.getElementById("vekalet-list").innerHTML=vekaletler.map((v,i)=>`<div class="vekalet-item"><span>${v.aciklama||"Vekalet ücreti"}${v.tarih?` <small style="color:#94a3b8">${formatDate(v.tarih)}</small>`:""}</span><small>${formatCurrency(v.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="vekaletSil(${i})">✕</button></div>`).join("")+(vekaletler.length>0?`<div style="text-align:right;font-size:12px;color:#d4a017;font-weight:700;padding:4px 2px">Toplam: ${formatCurrency(top)}</div>`:"");}
+function tahsilEkle(){const t=document.getElementById("tahsil-input").value;const a=document.getElementById("tahsil-aciklama").value;const tar=document.getElementById("tahsil-tarih").value;if(!t)return;tahsilatlar.push({tutar:parseFloat(t),aciklama:a,tarih:tar||bugun()});document.getElementById("tahsil-input").value="";document.getElementById("tahsil-aciklama").value="";document.getElementById("tahsil-tarih").value=bugun();renderTahsilList();}
 function tahsilSil(i){tahsilatlar.splice(i,1);renderTahsilList();}
-function renderTahsilList(){const top=tahsilatlar.reduce((s,t)=>s+(t.tutar||0),0);document.getElementById("tahsil-list").innerHTML=tahsilatlar.map((t,i)=>`<div class="vekalet-item"><span>${t.aciklama||"Tahsilat"}</span><small>${formatCurrency(t.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="tahsilSil(${i})">✕</button></div>`).join("")+(tahsilatlar.length>0?`<div style="text-align:right;font-size:12px;color:#16a34a;font-weight:700;padding:4px 2px">Toplam: ${formatCurrency(top)}</div>`:"");}
+function renderTahsilList(){const top=tahsilatlar.reduce((s,t)=>s+(t.tutar||0),0);document.getElementById("tahsil-list").innerHTML=tahsilatlar.map((t,i)=>`<div class="vekalet-item"><span>${t.aciklama||"Tahsilat"}${t.tarih?` <small style="color:#94a3b8">${formatDate(t.tarih)}</small>`:""}</span><small>${formatCurrency(t.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="tahsilSil(${i})">✕</button></div>`).join("")+(tahsilatlar.length>0?`<div style="text-align:right;font-size:12px;color:#16a34a;font-weight:700;padding:4px 2px">Toplam: ${formatCurrency(top)}</div>`:"");}
 function toggleHacizPanel(){panelAcik=!panelAcik;document.getElementById("haciz-panel").style.display=panelAcik?"flex":"none";document.getElementById("haciz-arrow").style.transform=panelAcik?"rotate(180deg)":"rotate(0deg)";}
 function updateHacizLabel(){const s=HACIZ_TIPLERI.filter(h=>document.getElementById(h.id)?.checked).map(h=>h.label);const l=document.getElementById("haciz-btn-label");if(s.length===0){l.textContent="Haciz türlerini seçmek için tıkla...";l.style.color="#94a3b8";l.style.fontWeight="";}else{l.textContent="✓ "+s.join(", ");l.style.color="#6366f1";l.style.fontWeight="600";}}
 function getSeciliHacizler(){return HACIZ_TIPLERI.filter(h=>document.getElementById(h.id)?.checked).map(h=>h.label);}
@@ -477,6 +515,8 @@ function resetForm(){
   document.getElementById("tik-kapali").className="tik-btn";
   document.getElementById("teblig-detay").style.display="none";
   document.getElementById("magdur-detay").style.display="none";
+  document.getElementById("tahsil-tarih").value=bugun();
+  document.getElementById("vekalet-tarih").value=bugun();
   renderVekaletList();renderTahsilList();
   panelAcik=false;
   document.getElementById("haciz-panel").style.display="none";
@@ -503,6 +543,8 @@ function openDuzenle(id){
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value=d.magdurKesinti||"";
   setSeciliHacizler(d.hacizSecili||[]);
   vekaletler=[...(d.vekaletler||[])];tahsilatlar=[...(d.tahsilatlar||[])];
+  document.getElementById("tahsil-tarih").value=bugun();
+  document.getElementById("vekalet-tarih").value=bugun();
   renderVekaletList();renderTahsilList();
   tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;kesinDurum=d.kesinDurum||"";
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
@@ -600,6 +642,64 @@ function disaAktar(){
   a.href=url;a.download="icra-yedek-"+new Date().toISOString().slice(0,10)+".json";
   a.click();URL.revokeObjectURL(url);
   toast("✅ Yedek alındı!");
+}
+
+const AY_KISA=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
+function openIstatistik(){
+  const toplamBorc=dosyalar.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
+  const toplamTahsilat=dosyalar.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
+  const toplamVekalet=dosyalar.reduce((s,d)=>s+(d.vekaletler||[]).reduce((a,v)=>a+(parseFloat(v.tutar)||0),0),0);
+  const oran=toplamBorc>0?Math.min(100,toplamTahsilat/toplamBorc*100):0;
+  const asamalar=[
+    {key:"baslangic",lbl:"📂 Başlangıç",renk:"#e85d4a"},
+    {key:"bekleyen",lbl:"⏳ Bekleyen",renk:"#f59e0b"},
+    {key:"kesinlesmis",lbl:"🔒 Kesinleşmiş",renk:"#6366f1"},
+    {key:"batik",lbl:"💀 Batık",renk:"#94a3b8"},
+    {key:"kapali",lbl:"✅ Kapalı",renk:"#22c55e"},
+  ].map(a=>({...a,cnt:dosyalar.filter(d=>d.bolum===a.key).length}));
+  const maxAsama=Math.max(1,...asamalar.map(a=>a.cnt));
+  const aylar={};
+  const ekle=(kalem,tip)=>{(kalem||[]).forEach(x=>{const tar=x.tarih;const key=tar&&/^\d{4}-\d{2}/.test(tar)?tar.slice(0,7):"tarihsiz";if(!aylar[key])aylar[key]={t:0,v:0};aylar[key][tip]+=parseFloat(x.tutar)||0;});};
+  dosyalar.forEach(d=>{ekle(d.tahsilatlar,"t");ekle(d.vekaletler,"v");});
+  const ayKeys=Object.keys(aylar).sort((a,b)=>a==="tarihsiz"?1:b==="tarihsiz"?-1:a.localeCompare(b));
+  const maxAy=Math.max(1,...ayKeys.map(k=>Math.max(aylar[k].t,aylar[k].v)));
+  const ayLabel=k=>{if(k==="tarihsiz")return"Tarihsiz";const[y,m]=k.split("-");return AY_KISA[parseInt(m,10)-1]+" "+y;};
+  const chart=ayKeys.length>0?`
+    <div class="ist-chart">
+      ${ayKeys.map(k=>{const o=aylar[k];const ht=Math.round(o.t/maxAy*150);const hv=Math.round(o.v/maxAy*150);
+        return`<div class="ist-col">
+          <div class="ist-bars">
+            <div class="ist-bar t" style="height:${o.t>0?Math.max(3,ht):0}px" title="Tahsilat: ${formatCurrency(o.t)}"></div>
+            <div class="ist-bar v" style="height:${o.v>0?Math.max(3,hv):0}px" title="Vekalet: ${formatCurrency(o.v)}"></div>
+          </div>
+          <div class="ist-col-lbl">${ayLabel(k)}</div>
+        </div>`;}).join("")}
+    </div>
+    <div class="ist-legend"><span><i class="ist-dot" style="background:#16a34a"></i>Tahsilat</span><span><i class="ist-dot" style="background:#d4a017"></i>Vekalet Ücreti</span></div>`
+    :`<div class="ist-empty">Henüz tarihli tahsilat/vekalet kaydı yok.</div>`;
+  document.getElementById("istatistik-icerik").innerHTML=`
+    <div class="ist-title">📊 İstatistikler</div>
+    <div class="ist-sub">${dosyalar.length} dosya · ${bugun().split("-").reverse().join(".")} itibarıyla</div>
+    <div class="ist-kpi-grid">
+      <div class="ist-kpi"><div class="k-lbl">Toplam Borç</div><div class="k-val" style="color:#1e293b">${formatCurrency(toplamBorc)}</div></div>
+      <div class="ist-kpi"><div class="k-lbl">Toplam Tahsilat</div><div class="k-val" style="color:#16a34a">${formatCurrency(toplamTahsilat)}</div></div>
+      <div class="ist-kpi"><div class="k-lbl">Toplam Vekalet</div><div class="k-val" style="color:#d4a017">${formatCurrency(toplamVekalet)}</div></div>
+      <div class="ist-kpi"><div class="k-lbl">Toplam Dosya</div><div class="k-val" style="color:#6366f1">${dosyalar.length}</div></div>
+    </div>
+    <div class="ist-sec-title">Tahsilat Oranı</div>
+    <div class="ist-oran-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:26px;font-weight:800;color:#16a34a">%${oran.toFixed(1)}</span>
+        <span style="font-size:12px;color:#94a3b8">${formatCurrency(toplamTahsilat)} / ${formatCurrency(toplamBorc)}</span>
+      </div>
+      <div class="ist-oran-bar"><div class="ist-oran-fill" style="width:${oran}%"></div></div>
+    </div>
+    <div class="ist-sec-title">Aşamalara Göre Dosyalar</div>
+    ${asamalar.map(a=>`<div class="ist-stage"><span class="s-lbl">${a.lbl}</span><span class="s-track"><span class="s-fill" style="width:${a.cnt/maxAsama*100}%;background:${a.renk}"></span></span><span class="s-cnt">${a.cnt}</span></div>`).join("")}
+    <div class="ist-sec-title">Aylık Tahsilat & Vekalet</div>
+    ${chart}
+    <div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById('istatistik-modal').style.display='none'">Kapat</button></div>`;
+  document.getElementById("istatistik-modal").style.display="flex";
 }
 
 yukle();
