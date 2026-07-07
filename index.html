@@ -70,6 +70,7 @@
     .field input,.field textarea,.field select{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:14px;outline:none;background:#fafafa;}
     .dosyano-input{display:flex;align-items:center;}
     .dosyano-prefix{background:#e2e8f0;border:1.5px solid #e2e8f0;border-right:none;padding:8px 10px;border-radius:8px 0 0 8px;font-size:14px;color:#475569;font-family:'DM Mono',monospace;font-weight:600;}
+    .dosyano-yil{background:#e2e8f0;border:1.5px solid #e2e8f0;border-right:none;padding:8px 8px;border-radius:8px 0 0 8px;font-size:14px;color:#475569;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;outline:none;}
     .dosyano-input input{border-radius:0 8px 8px 0;flex:1;}
     .tik-group{display:flex;flex-direction:column;gap:10px;}
     .tik-row{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:10px 14px;}
@@ -201,7 +202,7 @@
           <div class="field col-span-2"><label>BORÇLU ADI *</label><input id="f-borclu" placeholder="Ad Soyad" /></div>
           <div class="field"><label>İCRA DAİRESİ</label><select id="f-daire"><option value="">Seçiniz...</option><option>Sakarya 1. İcra Dairesi</option><option>Sakarya 2. İcra Dairesi</option><option>Sakarya 3. İcra Dairesi</option><option>Sakarya 4. İcra Dairesi</option></select></div>
           <div class="field"><label>BORÇ MİKTARI (TL)</label><input id="f-borcMiktar" type="number" placeholder="0.00" /></div>
-          <div class="field col-span-2"><label>DOSYA / ESAS NO</label><div class="dosyano-input"><span class="dosyano-prefix">2026/</span><input id="f-dosyaNo" placeholder="1234" /></div></div>
+          <div class="field col-span-2"><label>DOSYA / ESAS NO</label><div class="dosyano-input"><select id="f-dosyaYil" class="dosyano-yil"><option value="2026">2026/</option><option value="2025">2025/</option></select><input id="f-dosyaNo" placeholder="1234" /></div></div>
           <div class="field"><label>TAKİP TARİHİ</label><input id="f-takipTarihi" type="date" /></div>
           <div class="field"><label>HATIRLATMA TARİHİ</label><input id="f-hatirlatma" type="date" /></div>
           <div class="field col-span-2">
@@ -345,6 +346,8 @@ function toast(msg){const el=document.createElement("div");el.className="toast";
 function formatCurrency(v){const n=parseFloat(v);if(!v||isNaN(n))return"-";return n.toLocaleString("tr-TR",{style:"currency",currency:"TRY"});}
 function formatDate(d){if(!d)return"-";const[y,m,day]=d.split("-");return`${day}.${m}.${y}`;}
 function bugun(){return new Date().toISOString().split("T")[0];}
+// Yıl kaydın içinde "YIL/NUMARA" olarak saklanır. Eski kayıtlar sadece numara içerdiği için varsayılan 2026 gösterilir.
+function dosyaNoGoster(no){if(!no)return"";return String(no).includes("/")?no:"2026/"+no;}
 
 async function yukle(){
   const{data,error}=await db.from("dosyalar").select("*").order("olusturma_tarihi",{ascending:false});
@@ -399,7 +402,7 @@ function render(){
     if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurKesinti?` (${formatCurrency(d.magdurKesinti)} kesinti)`:""}</span>`);
     return`<div class="dosya-card ${d.bolum}" onclick="openDetay('${d.id}')">
       <div>
-        <div class="dosya-title"><span class="isim">${d.borclu}</span>${d.dosyaNo?`<span class="dosyano">2026/${d.dosyaNo}</span>`:""}</div>
+        <div class="dosya-title"><span class="isim">${d.borclu}</span>${d.dosyaNo?`<span class="dosyano">${dosyaNoGoster(d.dosyaNo)}</span>`:""}</div>
         <div class="dosya-meta">
           ${d.daire?`<span>🏛️ ${d.daire}</span>`:""}
           ${d.borcMiktar?`<span class="miktar">${formatCurrency(d.borcMiktar)}</span>`:""}
@@ -448,6 +451,7 @@ function setSeciliHacizler(liste){HACIZ_TIPLERI.forEach(h=>{const el=document.ge
 function resetForm(){
   ["borclu","dosyaNo","borcMiktar","takipTarihi","hatirlatma","notlar","tebligTarihi"].forEach(id=>{const el=document.getElementById("f-"+id);if(el)el.value="";});
   document.getElementById("f-hacizler").value="";
+  document.getElementById("f-dosyaYil").value="2026";
   document.getElementById("f-daire").value="";
   document.getElementById("f-bolum").value="baslangic";
   document.getElementById("f-tebligSekli").value="";
@@ -476,7 +480,7 @@ function openDuzenle(id){
   document.getElementById("form-title").textContent="Dosyayı Düzenle";
   document.getElementById("f-borclu").value=d.borclu||"";
   document.getElementById("f-daire").value=d.daire||"";
-  document.getElementById("f-dosyaNo").value=d.dosyaNo||"";
+  {const dn=String(d.dosyaNo||"");if(dn.includes("/")){const i=dn.indexOf("/");const y=dn.slice(0,i);document.getElementById("f-dosyaYil").value=(y==="2025"?"2025":"2026");document.getElementById("f-dosyaNo").value=dn.slice(i+1);}else{document.getElementById("f-dosyaYil").value="2026";document.getElementById("f-dosyaNo").value=dn;}}
   document.getElementById("f-borcMiktar").value=d.borcMiktar||"";
   document.getElementById("f-takipTarihi").value=d.takipTarihi||"";
   document.getElementById("f-hatirlatma").value=d.hatirlatmaTarihi||"";
@@ -510,7 +514,7 @@ async function kaydet(){
   const btn=document.getElementById("btn-kaydet");btn.textContent="Kaydediliyor...";btn.disabled=true;
   const kayit={
     borclu,daire:document.getElementById("f-daire").value||null,
-    dosya_no:document.getElementById("f-dosyaNo").value||null,
+    dosya_no:(document.getElementById("f-dosyaNo").value.trim()?document.getElementById("f-dosyaYil").value+"/"+document.getElementById("f-dosyaNo").value.trim():null),
     borc_miktar:document.getElementById("f-borcMiktar").value||null,
     takip_tarihi:document.getElementById("f-takipTarihi").value||null,
     hatirlatma_tarihi:document.getElementById("f-hatirlatma").value||null,
@@ -547,7 +551,7 @@ function openDetay(id){
     <div class="detay-header">
       <div>
         <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${d.borclu}</h2>
-        ${d.dosyaNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#6366f1;font-weight:600">2026/${d.dosyaNo}</span>`:""}
+        ${d.dosyaNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#6366f1;font-weight:600">${dosyaNoGoster(d.dosyaNo)}</span>`:""}
         ${d.daire?`<span style="font-size:12px;color:#64748b;margin-left:8px">· ${d.daire}</span>`:""}
       </div>
       <button class="btn-close" onclick="document.getElementById('detay-modal').style.display='none'">✕</button>
