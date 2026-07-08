@@ -168,33 +168,45 @@
   </style>
 </head>
 <body>
-  <div id="password-gate" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);display:flex;align-items:center;justify-content:center;z-index:9999;">
-  <div style="background:#fff;border-radius:16px;padding:40px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
-    <div style="font-size:40px;margin-bottom:16px;">⚖️</div>
-    <h2 style="font-size:18px;color:#1e293b;margin-bottom:8px;">İcra Takip Sistemi</h2>
-    <p style="font-size:13px;color:#94a3b8;margin-bottom:20px;">Devam etmek için şifre gir</p>
-    <input type="password" id="pw-input" placeholder="Şifre" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')sifreKontrol()" />
-    <button onclick="sifreKontrol()" style="width:100%;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;">Giriş Yap</button>
-    <p id="pw-error" style="color:#e85d4a;font-size:13px;margin-top:10px;display:none;">❌ Yanlış şifre, tekrar dene</p>
+  <div id="auth-gate" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:36px 32px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
+    <div style="font-size:40px;margin-bottom:14px;">⚖️</div>
+    <h2 style="font-size:18px;color:#1e293b;margin-bottom:4px;">İcra Takip Sistemi</h2>
+
+    <!-- Yükleniyor -->
+    <div id="auth-loading" style="padding:16px 0;">
+      <p style="font-size:13px;color:#94a3b8;">Kontrol ediliyor...</p>
+    </div>
+
+    <!-- 1) E-posta + Şifre -->
+    <div id="auth-login" style="display:none;">
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:20px;">Devam etmek için giriş yap</p>
+      <input type="email" id="auth-email" placeholder="E-posta" autocomplete="username" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:10px;box-sizing:border-box;" />
+      <input type="password" id="auth-pw" placeholder="Şifre" autocomplete="current-password" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')girisYap()" />
+      <button id="auth-login-btn" onclick="girisYap()" style="width:100%;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;">Giriş Yap</button>
+    </div>
+
+    <!-- 2) Google Authenticator kurulumu (ilk sefer) -->
+    <div id="auth-enroll" style="display:none;">
+      <p style="font-size:13px;color:#64748b;margin:12px 0 14px;line-height:1.5;">Google Authenticator uygulamasıyla aşağıdaki QR kodu tarat, sonra uygulamadaki 6 haneli kodu gir.</p>
+      <div id="auth-qr" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:4px;">QR taranamıyorsa bu anahtarı elle gir:</p>
+      <code id="auth-secret" style="display:block;font-size:12px;color:#475569;background:#f1f5f9;padding:8px;border-radius:8px;word-break:break-all;margin-bottom:14px;"></code>
+      <input type="text" id="auth-enroll-code" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:16px;letter-spacing:3px;text-align:center;outline:none;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')enrollDogrula()" />
+      <button id="auth-enroll-btn" onclick="enrollDogrula()" style="width:100%;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;">Doğrula ve Etkinleştir</button>
+    </div>
+
+    <!-- 3) Google Authenticator kodu (her giriş) -->
+    <div id="auth-mfa" style="display:none;">
+      <p style="font-size:13px;color:#64748b;margin:12px 0 14px;">Google Authenticator uygulamasındaki 6 haneli kodu gir.</p>
+      <input type="text" id="auth-mfa-code" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:16px;letter-spacing:3px;text-align:center;outline:none;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')mfaDogrula()" />
+      <button id="auth-mfa-btn" onclick="mfaDogrula()" style="width:100%;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;">Doğrula</button>
+    </div>
+
+    <p id="auth-error" style="color:#e85d4a;font-size:13px;margin-top:12px;display:none;"></p>
+    <p id="auth-signout" onclick="cikisYap()" style="color:#94a3b8;font-size:12px;margin-top:16px;cursor:pointer;display:none;">← Çıkış yap / farklı hesap</p>
   </div>
 </div>
-<script>
-  const DOGRU_SIFRE = "TahaGenc-1823";
-  const GIRIS_SURESI = 15 * 24 * 60 * 60 * 1000; // 15 gün (milisaniye)
-  const girisZamani = localStorage.getItem("icra-giris-zamani");
-  if(girisZamani && (Date.now() - parseInt(girisZamani)) < GIRIS_SURESI){
-    document.getElementById("password-gate").style.display="none";
-  }
-  function sifreKontrol(){
-    const val=document.getElementById("pw-input").value;
-    if(val===DOGRU_SIFRE){
-      localStorage.setItem("icra-giris-zamani", Date.now().toString());
-      document.getElementById("password-gate").style.display="none";
-    } else {
-      document.getElementById("pw-error").style.display="block";
-    }
-  }
-</script>
 <div class="header">
   <div class="header-inner">
     <div class="header-top">
@@ -205,6 +217,7 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-yedek" onclick="openIstatistik()">📊 İstatistik</button>
         <button class="btn-yedek" onclick="disaAktar()">⬇️ Yedek Al</button>
+        <button class="btn-yedek" onclick="cikisYap()">🔒 Çıkış</button>
         <button class="btn-yeni" onclick="openYeni()">+ Yeni Dosya</button>
       </div>
     </div>
@@ -378,7 +391,95 @@
 const SUPABASE_URL="https://xfwzoybfkcpvhcajtxcb.supabase.co";
 const SUPABASE_KEY="sb_publishable_k_dxQeABIJGL19Uwli4s4w_2RoNBlzY";
 const{createClient}=supabase;
-const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+const db=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+
+/* ---------- Kimlik Doğrulama (Supabase Auth + Google Authenticator/TOTP) ---------- */
+function authGoster(id){["auth-loading","auth-login","auth-enroll","auth-mfa"].forEach(x=>{const el=document.getElementById(x);if(el)el.style.display=(x===id?"block":"none");});const so=document.getElementById("auth-signout");if(so)so.style.display=(id==="auth-login"||id==="auth-loading")?"none":"block";}
+function authHata(msg){const el=document.getElementById("auth-error");el.textContent=msg||"";el.style.display=msg?"block":"none";}
+function authBtn(id,bekle,yazi){const b=document.getElementById(id);if(!b)return;b.disabled=bekle;b.textContent=bekle?"Lütfen bekle...":yazi;}
+
+async function authInit(){
+  authHata("");
+  const{data:{session}}=await db.auth.getSession();
+  if(!session){authGoster("auth-login");return;}
+  await mfaDurumKontrol();
+}
+
+async function mfaDurumKontrol(){
+  try{
+    const{data:aal,error:aErr}=await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if(aErr)throw aErr;
+    const{data:fData,error:fErr}=await db.auth.mfa.listFactors();
+    if(fErr)throw fErr;
+    const totp=(fData.totp||[]).filter(f=>f.status==="verified");
+    if(totp.length===0){await enrollBaslat();return;}
+    if(aal.currentLevel==="aal2"){uygulamayaGir();return;}
+    // Doğrulanmış faktör var ama bu oturum henüz aal2 değil → kod iste
+    window._mfaFactorId=totp[0].id;
+    authGoster("auth-mfa");
+    setTimeout(()=>document.getElementById("auth-mfa-code")?.focus(),100);
+  }catch(e){authHata(e.message||"Bir hata oluştu");authGoster("auth-login");}
+}
+
+async function girisYap(){
+  authHata("");
+  const email=document.getElementById("auth-email").value.trim();
+  const pw=document.getElementById("auth-pw").value;
+  if(!email||!pw){authHata("E-posta ve şifre gerekli");return;}
+  authBtn("auth-login-btn",true);
+  const{error}=await db.auth.signInWithPassword({email,password:pw});
+  authBtn("auth-login-btn",false,"Giriş Yap");
+  if(error){authHata("Giriş başarısız: "+(error.message==="Invalid login credentials"?"e-posta veya şifre hatalı":error.message));return;}
+  authGoster("auth-loading");
+  await mfaDurumKontrol();
+}
+
+async function enrollBaslat(){
+  authHata("");
+  authGoster("auth-enroll");
+  document.getElementById("auth-qr").innerHTML="<p style='font-size:13px;color:#94a3b8'>QR oluşturuluyor...</p>";
+  // Varsa yarım kalmış (unverified) faktörleri temizle
+  try{const{data:fData}=await db.auth.mfa.listFactors();for(const f of (fData?.all||[])){if(f.status!=="verified"){await db.auth.mfa.unenroll({factorId:f.id});}}}catch(e){}
+  const{data,error}=await db.auth.mfa.enroll({factorType:"totp",friendlyName:"Authenticator-"+Date.now()});
+  if(error){authHata(error.message);return;}
+  window._enrollFactorId=data.id;
+  const qr=data.totp.qr_code;
+  document.getElementById("auth-qr").innerHTML=`<img alt="QR" src="${qr}" style="width:180px;height:180px;border-radius:8px;" />`;
+  document.getElementById("auth-secret").textContent=data.totp.secret;
+  setTimeout(()=>document.getElementById("auth-enroll-code")?.focus(),100);
+}
+
+async function enrollDogrula(){
+  authHata("");
+  const code=document.getElementById("auth-enroll-code").value.trim();
+  if(code.length<6){authHata("6 haneli kodu gir");return;}
+  authBtn("auth-enroll-btn",true);
+  const{error}=await db.auth.mfa.challengeAndVerify({factorId:window._enrollFactorId,code});
+  authBtn("auth-enroll-btn",false,"Doğrula ve Etkinleştir");
+  if(error){authHata("Kod doğrulanamadı, tekrar dene: "+error.message);return;}
+  uygulamayaGir();
+}
+
+async function mfaDogrula(){
+  authHata("");
+  const code=document.getElementById("auth-mfa-code").value.trim();
+  if(code.length<6){authHata("6 haneli kodu gir");return;}
+  authBtn("auth-mfa-btn",true);
+  const{error}=await db.auth.mfa.challengeAndVerify({factorId:window._mfaFactorId,code});
+  authBtn("auth-mfa-btn",false,"Doğrula");
+  if(error){authHata("Kod hatalı, tekrar dene");return;}
+  uygulamayaGir();
+}
+
+async function cikisYap(){
+  await db.auth.signOut();
+  location.reload();
+}
+
+function uygulamayaGir(){
+  document.getElementById("auth-gate").style.display="none";
+  yukle();
+}
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
 let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,kesinDurum="";
@@ -702,7 +803,7 @@ function openIstatistik(){
   document.getElementById("istatistik-modal").style.display="flex";
 }
 
-yukle();
+authInit();
 </script>
 </body>
 </html>
