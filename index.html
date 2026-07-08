@@ -443,8 +443,14 @@ async function enrollBaslat(){
   const{data,error}=await db.auth.mfa.enroll({factorType:"totp",friendlyName:"Authenticator-"+Date.now()});
   if(error){authHata(error.message);return;}
   window._enrollFactorId=data.id;
-  const qr=data.totp.qr_code;
-  document.getElementById("auth-qr").innerHTML=`<img alt="QR" src="${qr}" style="width:180px;height:180px;border-radius:8px;" />`;
+  // QR verisi SVG data-URI olduğundan innerHTML yerine img.src ile atıyoruz (tırnak sorununu önler)
+  const qrWrap=document.getElementById("auth-qr");
+  qrWrap.innerHTML="";
+  const img=document.createElement("img");
+  img.alt="QR";
+  img.src=data.totp.qr_code;
+  img.style.cssText="width:180px;height:180px;border-radius:8px;";
+  qrWrap.appendChild(img);
   document.getElementById("auth-secret").textContent=data.totp.secret;
   setTimeout(()=>document.getElementById("auth-enroll-code")?.focus(),100);
 }
