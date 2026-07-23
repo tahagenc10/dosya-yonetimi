@@ -29,6 +29,7 @@
     .tab.active{background:#fff;color:#1e293b;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
     .tab-baslangic.active{color:#e85d4a;}
     .tab-bekleyen.active{color:#f59e0b;}
+    .tab-kismi.active{color:#06b6d4;}
     .tab-kesinlesmis.active{color:#6366f1;}
     .tab-batik.active{color:#94a3b8;}
     .tab-kapali.active{color:#22c55e;}
@@ -42,6 +43,7 @@
     .dosya-card{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;border:1.5px solid #f1f5f9;transition:box-shadow 0.15s;display:grid;grid-template-columns:1fr auto;align-items:start;gap:12px;}
     .dosya-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);}
     .dosya-card.bekleyen{border-left:4px solid #f59e0b;}
+    .dosya-card.kismi{border-left:4px solid #06b6d4;}
     .dosya-card.kesinlesmis{border-left:4px solid #6366f1;}
     .dosya-card.batik{border-left:4px solid #94a3b8;opacity:0.8;}
     .dosya-card.kapali{border-left:4px solid #22c55e;opacity:0.8;}
@@ -229,6 +231,7 @@
   <div class="tabs">
     <button class="tab tab-baslangic active" onclick="setTab('baslangic')">📂 Başlangıç <span id="cnt-baslangic"></span></button>
     <button class="tab tab-bekleyen" onclick="setTab('bekleyen')">⏳ Bekleyen <span id="cnt-bekleyen"></span></button>
+    <button class="tab tab-kismi" onclick="setTab('kismi')">💵 Kısmi Ödeme <span id="cnt-kismi"></span></button>
     <button class="tab tab-kesinlesmis" onclick="setTab('kesinlesmis')">🔒 Kesinleşmiş <span id="cnt-kesinlesmis"></span></button>
     <button class="tab tab-batik" onclick="setTab('batik')">💀 Batık <span id="cnt-batik"></span></button>
     <button class="tab tab-kapali" onclick="setTab('kapali')">✅ Kapalı <span id="cnt-kapali"></span></button>
@@ -255,6 +258,7 @@
             <select id="f-bolum">
               <option value="baslangic">Başlangıç</option>
               <option value="bekleyen">Bekleyen</option>
+              <option value="kismi">Kısmi Ödeme</option>
               <option value="kesinlesmis">Kesinleşmiş</option>
               <option value="batik">Batık</option>
               <option value="kapali">Kapalı</option>
@@ -524,7 +528,7 @@ function setTab(tab){
 
 function render(){
   const metin=document.getElementById("arama").value.toLowerCase();
-  ["baslangic","bekleyen","kesinlesmis","batik","kapali"].forEach(b=>{
+  ["baslangic","bekleyen","kismi","kesinlesmis","batik","kapali"].forEach(b=>{
     const el=document.getElementById("cnt-"+b);
     if(el)el.textContent=`(${dosyalar.filter(d=>d.bolum===b).length})`;
   });
@@ -727,7 +731,7 @@ function openDetay(id){
       <div class="detay-tik-row"><span>21/2 Talebi</span><span>${d.tik212Talep?"⏳ Talep Edildi":"—"}</span></div>
       <div class="detay-tik-row"><span>Kesinleşme</span><span>${d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi"}</span></div>
       <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
-      <div class="detay-tik-row"><span>Dosya Durumu</span><span>${d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":"📂 Başlangıç"}</span></div>
+      <div class="detay-tik-row"><span>Dosya Durumu</span><span>${d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç"}</span></div>
     </div>
     ${tahsilatHtml}${vekaletHtml}${hacizHtml}
     ${d.notlar?`<div class="detay-section detay-not"><div class="lbl">NOTLAR</div><div style="font-size:13px;color:#475569">${d.notlar}</div></div>`:""}
@@ -760,6 +764,7 @@ function openIstatistik(){
   const asamalar=[
     {key:"baslangic",lbl:"📂 Başlangıç",renk:"#e85d4a"},
     {key:"bekleyen",lbl:"⏳ Bekleyen",renk:"#f59e0b"},
+    {key:"kismi",lbl:"💵 Kısmi Ödeme",renk:"#06b6d4"},
     {key:"kesinlesmis",lbl:"🔒 Kesinleşmiş",renk:"#6366f1"},
     {key:"batik",lbl:"💀 Batık",renk:"#94a3b8"},
     {key:"kapali",lbl:"✅ Kapalı",renk:"#22c55e"},
