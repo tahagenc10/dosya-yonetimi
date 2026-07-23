@@ -85,6 +85,15 @@
     .tik-btn.active-green{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
     .tik-btn.active-blue{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;}
     .tik-btn.active-purple{background:#f0f0fd;border-color:#6366f1;color:#4338ca;}
+    .bolum-group{display:flex;flex-wrap:wrap;gap:6px;}
+    .bolum-btn{border:1.5px solid #e2e8f0;background:#fff;padding:8px 13px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#64748b;transition:all 0.15s;}
+    .bolum-btn:hover{border-color:#cbd5e1;}
+    .bolum-btn.active[data-bolum="baslangic"]{background:#fef2f0;border-color:#e85d4a;color:#e85d4a;}
+    .bolum-btn.active[data-bolum="bekleyen"]{background:#fffbeb;border-color:#f59e0b;color:#d97706;}
+    .bolum-btn.active[data-bolum="kismi"]{background:#ecfeff;border-color:#06b6d4;color:#0891b2;}
+    .bolum-btn.active[data-bolum="kesinlesmis"]{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
+    .bolum-btn.active[data-bolum="batik"]{background:#f1f5f9;border-color:#94a3b8;color:#475569;}
+    .bolum-btn.active[data-bolum="kapali"]{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
     .vekalet-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
     .vekalet-item{display:flex;align-items:center;gap:8px;background:#f8fafc;padding:8px 12px;border-radius:8px;}
     .vekalet-item span{flex:1;font-size:13px;color:#1e293b;}
@@ -255,14 +264,15 @@
           <div class="field"><label>HATIRLATMA TARİHİ</label><input id="f-hatirlatma" type="date" /></div>
           <div class="field col-span-2">
             <label>BÖLÜM</label>
-            <select id="f-bolum">
-              <option value="baslangic">Başlangıç</option>
-              <option value="bekleyen">Bekleyen</option>
-              <option value="kismi">Kısmi Ödeme</option>
-              <option value="kesinlesmis">Kesinleşmiş</option>
-              <option value="batik">Batık</option>
-              <option value="kapali">Kapalı</option>
-            </select>
+            <input type="hidden" id="f-bolum" value="baslangic" />
+            <div class="bolum-group">
+              <button type="button" class="bolum-btn" data-bolum="baslangic" onclick="setBolum('baslangic')">📂 Başlangıç</button>
+              <button type="button" class="bolum-btn" data-bolum="bekleyen" onclick="setBolum('bekleyen')">⏳ Bekleyen</button>
+              <button type="button" class="bolum-btn" data-bolum="kismi" onclick="setBolum('kismi')">💵 Kısmi Ödeme</button>
+              <button type="button" class="bolum-btn" data-bolum="kesinlesmis" onclick="setBolum('kesinlesmis')">🔒 Kesinleşmiş</button>
+              <button type="button" class="bolum-btn" data-bolum="batik" onclick="setBolum('batik')">💀 Batık</button>
+              <button type="button" class="bolum-btn" data-bolum="kapali" onclick="setBolum('kapali')">✅ Kapalı</button>
+            </div>
           </div>
         </div>
       </div>
@@ -579,21 +589,24 @@ function toggleTik(tip){
   if(tip==="212talep"){tik212Talep=!tik212Talep;document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");}
   if(tip==="magdur"){tikMagdur=!tikMagdur;document.getElementById("tik-magdur").className="tik-btn"+(tikMagdur?" active-green":"");document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";}
 }
+function setBolum(val){
+  document.getElementById("f-bolum").value=val;
+  document.querySelectorAll(".bolum-btn").forEach(b=>b.classList.toggle("active",b.dataset.bolum===val));
+  const tk=document.getElementById("tik-kapali");
+  if(tk)tk.className="tik-btn"+(val==="kapali"?" active-green":"");
+}
 function toggleKesin(tip){
   kesinDurum=kesinDurum===tip?"":tip;
-  if(kesinDurum==="kesin")document.getElementById("f-bolum").value="kesinlesmis";
+  if(kesinDurum==="kesin")setBolum("kesinlesmis");
   document.getElementById("tik-kesintalep").className="tik-btn"+(kesinDurum==="talep"?" active-blue":"");
   document.getElementById("tik-kesin").className="tik-btn"+(kesinDurum==="kesin"?" active-purple":"");
 }
 function toggleKapali(){
-  const sel=document.getElementById("f-bolum");
-  if(sel.value==="kapali"){
-    sel.value="baslangic";
-    document.getElementById("tik-kapali").className="tik-btn";
+  if(document.getElementById("f-bolum").value==="kapali"){
+    setBolum("baslangic");
     toast("↩️ Tamamlandı işareti kaldırıldı, kaydetmeyi unutma!");
   }else{
-    sel.value="kapali";
-    document.getElementById("tik-kapali").className="tik-btn active-green";
+    setBolum("kapali");
     toast("✅ Dosya kapalı olarak işaretlendi, kaydetmeyi unutma!");
   }
 }
@@ -613,7 +626,7 @@ function resetForm(){
   document.getElementById("f-hacizler").value="";
   document.getElementById("f-dosyaYil").value="2026";
   document.getElementById("f-daire").value="";
-  document.getElementById("f-bolum").value="baslangic";
+  setBolum("baslangic");
   document.getElementById("f-tebligSekli").value="";
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value="";
   setSeciliHacizler([]);
@@ -646,7 +659,7 @@ function openDuzenle(id){
   document.getElementById("f-borcMiktar").value=d.borcMiktar||"";
   document.getElementById("f-takipTarihi").value=d.takipTarihi||"";
   document.getElementById("f-hatirlatma").value=d.hatirlatmaTarihi||"";
-  document.getElementById("f-bolum").value=d.bolum||"baslangic";
+  setBolum(d.bolum||"baslangic");
   document.getElementById("f-notlar").value=d.notlar||"";
   document.getElementById("f-tebligTarihi").value=d.tebligTarihi||"";
   document.getElementById("f-tebligSekli").value=d.tebligSekli||"";
