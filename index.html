@@ -94,6 +94,20 @@
     .bolum-btn.active[data-bolum="kesinlesmis"]{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
     .bolum-btn.active[data-bolum="batik"]{background:#f1f5f9;border-color:#94a3b8;color:#475569;}
     .bolum-btn.active[data-bolum="kapali"]{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
+    /* Mağdur İadesi kartı */
+    .magdur-card{background:#faf9fe;border:1.5px solid #eee7fb;border-radius:12px;padding:14px 16px;transition:all .15s;}
+    .magdur-card.on{background:#f7f2ff;border-color:#d8c7f5;}
+    .magdur-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .magdur-toggle{border:1.5px solid #e2e8f0;background:#fff;color:#64748b;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
+    .magdur-toggle:hover{border-color:#c9b6ee;}
+    .magdur-toggle::before{content:"○";font-size:14px;}
+    .magdur-toggle.on{background:#9333ea;border-color:#9333ea;color:#fff;box-shadow:0 3px 10px rgba(147,51,234,0.25);}
+    .magdur-toggle.on::before{content:"✓";}
+    .magdur-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px dashed #d8c7f5;}
+    .magdur-fields label{color:#7c3aed;}
+    .magdur-fields input{border-color:#e6dbfa;}
+    .magdur-fields input:focus{border-color:#9333ea;}
+    @media(max-width:600px){.magdur-fields{grid-template-columns:1fr;}}
     .vekalet-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
     .vekalet-item{display:flex;align-items:center;gap:8px;background:#f8fafc;padding:8px 12px;border-radius:8px;}
     .vekalet-item span{flex:1;font-size:13px;color:#1e293b;}
@@ -320,17 +334,20 @@
           </div>
         </div>
         <div style="margin-bottom:12px">
-          <div class="tik-row" style="margin-bottom:8px">
-            <div>
-              <div class="tik-row-label">Mağdur İadesi</div>
-              <div class="tik-row-sub">Tahsilattan mağdura iade yapıldı mı?</div>
+          <div class="magdur-card" id="magdur-card">
+            <div class="magdur-head">
+              <div>
+                <div class="tik-row-label">💜 Mağdur İadesi</div>
+                <div class="tik-row-sub">Tahsilattan mağdura iade yapıldı mı?</div>
+              </div>
+              <button type="button" class="magdur-toggle" id="tik-magdur" onclick="toggleTik('magdur')">İade Yapıldı</button>
             </div>
-            <div class="tik-toggle">
-              <button type="button" class="tik-btn" id="tik-magdur" onclick="toggleTik('magdur')">✓ İade Yapıldı</button>
+            <div id="magdur-detay" style="display:none">
+              <div class="magdur-fields">
+                <div class="field"><label>İADE TARİHİ</label><input id="f-magdurTarihi" type="date" /></div>
+                <div class="field"><label>KESİNTİ MİKTARI (TL)</label><input id="f-magdurKesinti" type="number" placeholder="0.00" /></div>
+              </div>
             </div>
-          </div>
-          <div id="magdur-detay" style="display:none">
-            <div class="field"><label>KESİNTİ MİKTARI (TL)</label><input id="f-magdurKesinti" type="number" placeholder="0.00" /></div>
           </div>
         </div>
         <div style="margin-top:12px">
@@ -520,7 +537,7 @@ async function yukle(){
     takipTarihi:d.takip_tarihi,hatirlatmaTarihi:d.hatirlatma_tarihi,bolum:d.bolum||"baslangic",
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
-    magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,
+    magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,magdurTarihi:d.magdur_tarihi,
     tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     vekaletler:d.vekaletler?JSON.parse(d.vekaletler):[],
     hacizSecili:d.haciz_secili?JSON.parse(d.haciz_secili):[],
@@ -587,7 +604,13 @@ function render(){
 function toggleTik(tip){
   if(tip==="teblig"){tikTeblig=!tikTeblig;document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");document.getElementById("teblig-detay").style.display=tikTeblig?"block":"none";}
   if(tip==="212talep"){tik212Talep=!tik212Talep;document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");}
-  if(tip==="magdur"){tikMagdur=!tikMagdur;document.getElementById("tik-magdur").className="tik-btn"+(tikMagdur?" active-green":"");document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";}
+  if(tip==="magdur"){
+    tikMagdur=!tikMagdur;
+    document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
+    document.getElementById("magdur-card").className="magdur-card"+(tikMagdur?" on":"");
+    document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";
+    if(tikMagdur){const dt=document.getElementById("f-magdurTarihi");if(!dt.value)dt.value=bugun();}
+  }
 }
 function setBolum(val){
   document.getElementById("f-bolum").value=val;
@@ -629,11 +652,13 @@ function resetForm(){
   setBolum("baslangic");
   document.getElementById("f-tebligSekli").value="";
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value="";
+  if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value="";
   setSeciliHacizler([]);
   tikTeblig=false;tik212Talep=false;tikMagdur=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
   document.getElementById("tik-teblig").className="tik-btn";
   document.getElementById("tik-212talep").className="tik-btn";
-  document.getElementById("tik-magdur").className="tik-btn";
+  document.getElementById("tik-magdur").className="magdur-toggle";
+  document.getElementById("magdur-card").className="magdur-card";
   document.getElementById("tik-kesintalep").className="tik-btn";
   document.getElementById("tik-kesin").className="tik-btn";
   document.getElementById("tik-kapali").className="tik-btn";
@@ -665,6 +690,7 @@ function openDuzenle(id){
   document.getElementById("f-tebligSekli").value=d.tebligSekli||"";
   document.getElementById("f-hacizler").value=d.hacizler||"";
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value=d.magdurKesinti||"";
+  if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value=d.magdurTarihi||"";
   setSeciliHacizler(d.hacizSecili||[]);
   vekaletler=[...(d.vekaletler||[])];tahsilatlar=[...(d.tahsilatlar||[])];
   document.getElementById("tahsil-tarih").value=bugun();
@@ -673,7 +699,8 @@ function openDuzenle(id){
   tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;kesinDurum=d.kesinDurum||"";
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
   document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");
-  document.getElementById("tik-magdur").className="tik-btn"+(tikMagdur?" active-green":"");
+  document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
+  document.getElementById("magdur-card").className="magdur-card"+(tikMagdur?" on":"");
   document.getElementById("tik-kapali").className="tik-btn"+(d.bolum==="kapali"?" active-green":"");
   document.getElementById("teblig-detay").style.display=tikTeblig?"block":"none";
   document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";
@@ -701,6 +728,7 @@ async function kaydet(){
     teblig_sekli:tikTeblig?(document.getElementById("f-tebligSekli").value||null):null,
     kesin_durum:kesinDurum,magdur_iade:tikMagdur,
     magdur_kesinti:tikMagdur?(document.getElementById("f-magdurKesinti").value||null):null,
+    magdur_tarihi:tikMagdur?(document.getElementById("f-magdurTarihi").value||null):null,
     tahsilatlar:JSON.stringify(tahsilatlar),vekaletler:JSON.stringify(vekaletler),
     haciz_secili:JSON.stringify(getSeciliHacizler()),
     hacizler:document.getElementById("f-hacizler").value||null,
@@ -743,7 +771,7 @@ function openDetay(id){
       <div class="detay-tik-row"><span>Tebliğ</span><span>${d.tebligEdildi?`✅ Edildi ${d.tebligTarihi?`(${formatDate(d.tebligTarihi)})`:""}  ${d.tebligSekli==="muhatap"?"· Muhatap":d.tebligSekli==="21/2"?"· 21/2":""}` :"❌ Edilmedi"}</span></div>
       <div class="detay-tik-row"><span>21/2 Talebi</span><span>${d.tik212Talep?"⏳ Talep Edildi":"—"}</span></div>
       <div class="detay-tik-row"><span>Kesinleşme</span><span>${d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi"}</span></div>
-      <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
+      <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
       <div class="detay-tik-row"><span>Dosya Durumu</span><span>${d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç"}</span></div>
     </div>
     ${tahsilatHtml}${vekaletHtml}${hacizHtml}
