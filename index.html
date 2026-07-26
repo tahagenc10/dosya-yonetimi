@@ -85,6 +85,8 @@
     .tik-btn.active-green{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
     .tik-btn.active-blue{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;}
     .tik-btn.active-purple{background:#f0f0fd;border-color:#6366f1;color:#4338ca;}
+    .tik-btn.active-red{background:#fef2f2;border-color:#ef4444;color:#dc2626;}
+    .resit-badge{background:#dc2626;color:#fff;font-size:14px;font-weight:800;padding:3px 10px;border-radius:6px;letter-spacing:0.5px;display:inline-block;text-transform:uppercase;box-shadow:0 2px 6px rgba(220,38,38,0.3);}
     .bolum-group{display:flex;flex-wrap:wrap;gap:6px;}
     .bolum-btn{border:1.5px solid #e2e8f0;background:#fff;padding:8px 13px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#64748b;transition:all 0.15s;}
     .bolum-btn:hover{border-color:#cbd5e1;}
@@ -284,6 +286,17 @@
             <div class="hizli-hint" id="hizli-hint">İcra dairesi ve dosya no'yu buraya yapıştır, aşağıdaki alanlar otomatik dolsun.</div>
           </div>
           <div class="field col-span-2"><label>BORÇLU ADI *</label><input id="f-borclu" placeholder="Ad Soyad" /></div>
+          <div class="field col-span-2">
+            <div class="tik-row">
+              <div>
+                <div class="tik-row-label">👶 Reşit Değil</div>
+                <div class="tik-row-sub">Borçlu 18 yaşından küçük mü?</div>
+              </div>
+              <div class="tik-toggle">
+                <button type="button" class="tik-btn" id="tik-resit" onclick="toggleTik('resit')">Reşit Değil</button>
+              </div>
+            </div>
+          </div>
           <div class="field"><label>İCRA DAİRESİ</label><select id="f-daire"><option value="">Seçiniz...</option><option>Sakarya 1. İcra Dairesi</option><option>Sakarya 2. İcra Dairesi</option><option>Sakarya 3. İcra Dairesi</option><option>Sakarya 4. İcra Dairesi</option></select></div>
           <div class="field"><label>BORÇ MİKTARI (TL)</label><input id="f-borcMiktar" type="number" placeholder="0.00" /></div>
           <div class="field col-span-2"><label>DOSYA / ESAS NO</label><div class="dosyano-input"><select id="f-dosyaYil" class="dosyano-yil"><option value="2026">2026/</option><option value="2025">2025/</option></select><input id="f-dosyaNo" placeholder="1234" /></div></div>
@@ -532,7 +545,7 @@ function uygulamayaGir(){
 }
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
 let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
-let tikTeblig=false,tik212Talep=false,tikMagdur=false,kesinDurum="";
+let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[];
 
 function toast(msg){const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3000);}
@@ -551,6 +564,7 @@ async function yukle(){
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
     magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,magdurTarihi:d.magdur_tarihi,
+    resitDegil:d.resit_degil||false,
     tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     vekaletler:d.vekaletler?JSON.parse(d.vekaletler):[],
     hacizSecili:d.haciz_secili?JSON.parse(d.haciz_secili):[],
@@ -595,7 +609,7 @@ function render(){
     if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurKesinti?` (${formatCurrency(d.magdurKesinti)} kesinti)`:""}</span>`);
     return`<div class="dosya-card ${d.bolum}" onclick="openDetay('${d.id}')">
       <div>
-        <div class="dosya-title"><span class="isim">${d.borclu}</span>${d.dosyaNo?`<span class="dosyano">${dosyaNoGoster(d.dosyaNo)}</span>`:""}</div>
+        <div class="dosya-title"><span class="isim">${d.borclu}</span>${d.dosyaNo?`<span class="dosyano">${dosyaNoGoster(d.dosyaNo)}</span>`:""}${d.resitDegil?`<span class="resit-badge">⚠️ Reşit Değil</span>`:""}</div>
         <div class="dosya-meta">
           ${d.daire?`<span>🏛️ ${d.daire}</span>`:""}
           ${d.borcMiktar?`<span class="miktar">${formatCurrency(d.borcMiktar)}</span>`:""}
@@ -617,6 +631,7 @@ function render(){
 function toggleTik(tip){
   if(tip==="teblig"){tikTeblig=!tikTeblig;document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");document.getElementById("teblig-detay").style.display=tikTeblig?"block":"none";}
   if(tip==="212talep"){tik212Talep=!tik212Talep;document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");}
+  if(tip==="resit"){tikResit=!tikResit;document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");}
   if(tip==="magdur"){
     tikMagdur=!tikMagdur;
     document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
@@ -704,7 +719,8 @@ function resetForm(){
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value="";
   if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value="";
   setSeciliHacizler([]);
-  tikTeblig=false;tik212Talep=false;tikMagdur=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
+  tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
+  document.getElementById("tik-resit").className="tik-btn";
   document.getElementById("tik-teblig").className="tik-btn";
   document.getElementById("tik-212talep").className="tik-btn";
   document.getElementById("tik-magdur").className="magdur-toggle";
@@ -747,7 +763,8 @@ function openDuzenle(id){
   document.getElementById("tahsil-tarih").value=bugun();
   document.getElementById("vekalet-tarih").value=bugun();
   renderVekaletList();renderTahsilList();
-  tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;kesinDurum=d.kesinDurum||"";
+  tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;tikResit=d.resitDegil||false;kesinDurum=d.kesinDurum||"";
+  document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
   document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");
   document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
@@ -777,7 +794,7 @@ async function kaydet(){
     teblig_edildi:tikTeblig,tik_212_talep:tik212Talep,
     teblig_tarihi:tikTeblig?(document.getElementById("f-tebligTarihi").value||null):null,
     teblig_sekli:tikTeblig?(document.getElementById("f-tebligSekli").value||null):null,
-    kesin_durum:kesinDurum,magdur_iade:tikMagdur,
+    kesin_durum:kesinDurum,magdur_iade:tikMagdur,resit_degil:tikResit,
     magdur_kesinti:tikMagdur?(document.getElementById("f-magdurKesinti").value||null):null,
     magdur_tarihi:tikMagdur?(document.getElementById("f-magdurTarihi").value||null):null,
     tahsilatlar:JSON.stringify(tahsilatlar),vekaletler:JSON.stringify(vekaletler),
@@ -806,7 +823,7 @@ function openDetay(id){
   document.getElementById("detay-icerik").innerHTML=`
     <div class="detay-header">
       <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${d.borclu}</h2>
+        <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${d.borclu}${d.resitDegil?` <span class="resit-badge">⚠️ Reşit Değil</span>`:""}</h2>
         ${d.dosyaNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#6366f1;font-weight:600">${dosyaNoGoster(d.dosyaNo)}</span>`:""}
         ${d.daire?`<span style="font-size:12px;color:#64748b;margin-left:8px">· ${d.daire}</span>`:""}
       </div>
