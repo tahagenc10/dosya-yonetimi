@@ -662,7 +662,8 @@ function hizliDoldur(str){
     bulunan.push(yil+"/"+no);
   }
   // Daire: sayı kısmından önceki metin
-  let daireKisim=(m?s.slice(0,m.index):s).replace(/[-–—:]\s*$/,"").trim();
+  // Numara metnin başında da sonunda da olabilir; numarayı çıkar, kalan kısmı daire kabul et
+  let daireKisim=(m?s.replace(m[0]," "):s).replace(/[-–—:]/g," ").replace(/\s+/g," ").trim();
   if(daireKisim){
     const dSel=document.getElementById("f-daire");
     const hedef=norm(daireKisim);
