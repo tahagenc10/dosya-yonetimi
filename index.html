@@ -113,7 +113,8 @@
     .magdur-toggle::before{content:"○";font-size:14px;}
     .magdur-toggle.on{background:#9333ea;border-color:#9333ea;color:#fff;box-shadow:0 3px 10px rgba(147,51,234,0.25);}
     .magdur-toggle.on::before{content:"✓";}
-    .magdur-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px dashed #d8c7f5;}
+    .magdur-haricen-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px dashed #d8c7f5;}
+    .magdur-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
     .magdur-fields label{color:#7c3aed;}
     .magdur-fields input{border-color:#e6dbfa;}
     .magdur-fields input:focus{border-color:#9333ea;}
@@ -369,9 +370,16 @@
               <button type="button" class="magdur-toggle" id="tik-magdur" onclick="toggleTik('magdur')">İade Yapıldı</button>
             </div>
             <div id="magdur-detay" style="display:none">
+              <div class="magdur-haricen-row">
+                <div>
+                  <div class="tik-row-label" style="font-size:13px">Haricen Tahsil</div>
+                  <div class="tik-row-sub">Haricen tahsilatta iadeden kesinti yapılmaz</div>
+                </div>
+                <button type="button" class="magdur-toggle" id="tik-haricen" onclick="toggleTik('haricen')">Haricen Tahsil</button>
+              </div>
               <div class="magdur-fields">
                 <div class="field"><label>İADE TARİHİ</label><input id="f-magdurTarihi" type="date" /></div>
-                <div class="field"><label>KESİNTİ MİKTARI (TL)</label><input id="f-magdurKesinti" type="number" placeholder="0.00" /></div>
+                <div class="field" id="magdur-kesinti-field"><label>KESİNTİ MİKTARI (TL)</label><input id="f-magdurKesinti" type="number" placeholder="0.00" /></div>
               </div>
             </div>
           </div>
@@ -545,7 +553,7 @@ function uygulamayaGir(){
 }
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
 let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
-let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,kesinDurum="";
+let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[];
 
 function toast(msg){const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3000);}
@@ -563,7 +571,7 @@ async function yukle(){
     takipTarihi:d.takip_tarihi,hatirlatmaTarihi:d.hatirlatma_tarihi,bolum:d.bolum||"baslangic",
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
-    magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,magdurTarihi:d.magdur_tarihi,
+    magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,magdurTarihi:d.magdur_tarihi,magdurHaricen:d.magdur_haricen||false,
     resitDegil:d.resit_degil||false,
     tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     vekaletler:d.vekaletler?JSON.parse(d.vekaletler):[],
@@ -606,7 +614,8 @@ function render(){
     if(d.tik212Talep)tikler.push(`<span class="tik" style="background:#eff6ff;color:#1d4ed8">⏳ 21/2 Talep</span>`);
     if(d.kesinDurum==="talep")tikler.push(`<span class="tik" style="background:#eff6ff;color:#1d4ed8">⏳ Kesinleşme Talep</span>`);
     if(d.kesinDurum==="kesin")tikler.push(`<span class="tik on">✓ Kesinleşti</span>`);
-    if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurKesinti?` (${formatCurrency(d.magdurKesinti)} kesinti)`:""}</span>`);
+    if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurHaricen?` (Haricen Tahsil)`:d.magdurKesinti?` (${formatCurrency(d.magdurKesinti)} kesinti)`:""}</span>`);
+    if(d.magdurHaricen)tikler.push(`<span class="tik" style="background:#ecfeff;color:#0891b2">💵 Haricen Tahsil</span>`);
     return`<div class="dosya-card ${d.bolum}" onclick="openDetay('${d.id}')">
       <div>
         <div class="dosya-title"><span class="isim">${d.borclu}</span>${d.dosyaNo?`<span class="dosyano">${dosyaNoGoster(d.dosyaNo)}</span>`:""}${d.resitDegil?`<span class="resit-badge">⚠️ Reşit Değil</span>`:""}</div>
@@ -638,6 +647,12 @@ function toggleTik(tip){
     document.getElementById("magdur-card").className="magdur-card"+(tikMagdur?" on":"");
     document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";
     if(tikMagdur){const dt=document.getElementById("f-magdurTarihi");if(!dt.value)dt.value=bugun();}
+  }
+  if(tip==="haricen"){
+    tikHaricen=!tikHaricen;
+    document.getElementById("tik-haricen").className="magdur-toggle"+(tikHaricen?" on":"");
+    document.getElementById("magdur-kesinti-field").style.display=tikHaricen?"none":"";
+    if(tikHaricen)document.getElementById("f-magdurKesinti").value="";
   }
 }
 function hizliReset(){
@@ -720,7 +735,9 @@ function resetForm(){
   if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value="";
   if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value="";
   setSeciliHacizler([]);
-  tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
+  tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;tikHaricen=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
+  document.getElementById("tik-haricen").className="magdur-toggle";
+  document.getElementById("magdur-kesinti-field").style.display="";
   document.getElementById("tik-resit").className="tik-btn";
   document.getElementById("tik-teblig").className="tik-btn";
   document.getElementById("tik-212talep").className="tik-btn";
@@ -764,7 +781,9 @@ function openDuzenle(id){
   document.getElementById("tahsil-tarih").value=bugun();
   document.getElementById("vekalet-tarih").value=bugun();
   renderVekaletList();renderTahsilList();
-  tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;tikResit=d.resitDegil||false;kesinDurum=d.kesinDurum||"";
+  tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;tikResit=d.resitDegil||false;tikHaricen=d.magdurHaricen||false;kesinDurum=d.kesinDurum||"";
+  document.getElementById("tik-haricen").className="magdur-toggle"+(tikHaricen?" on":"");
+  document.getElementById("magdur-kesinti-field").style.display=tikHaricen?"none":"";
   document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
   document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");
@@ -796,8 +815,9 @@ async function kaydet(){
     teblig_tarihi:tikTeblig?(document.getElementById("f-tebligTarihi").value||null):null,
     teblig_sekli:tikTeblig?(document.getElementById("f-tebligSekli").value||null):null,
     kesin_durum:kesinDurum,magdur_iade:tikMagdur,resit_degil:tikResit,
-    magdur_kesinti:tikMagdur?(document.getElementById("f-magdurKesinti").value||null):null,
+    magdur_kesinti:(tikMagdur&&!tikHaricen)?(document.getElementById("f-magdurKesinti").value||null):null,
     magdur_tarihi:tikMagdur?(document.getElementById("f-magdurTarihi").value||null):null,
+    magdur_haricen:tikMagdur?tikHaricen:false,
     tahsilatlar:JSON.stringify(tahsilatlar),vekaletler:JSON.stringify(vekaletler),
     haciz_secili:JSON.stringify(getSeciliHacizler()),
     hacizler:document.getElementById("f-hacizler").value||null,
@@ -840,7 +860,7 @@ function openDetay(id){
       <div class="detay-tik-row"><span>Tebliğ</span><span>${d.tebligEdildi?`✅ Edildi ${d.tebligTarihi?`(${formatDate(d.tebligTarihi)})`:""}  ${d.tebligSekli==="muhatap"?"· Muhatap":d.tebligSekli==="21/2"?"· 21/2":""}` :"❌ Edilmedi"}</span></div>
       <div class="detay-tik-row"><span>21/2 Talebi</span><span>${d.tik212Talep?"⏳ Talep Edildi":"—"}</span></div>
       <div class="detay-tik-row"><span>Kesinleşme</span><span>${d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi"}</span></div>
-      <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
+      <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurHaricen?` · 💵 Haricen Tahsil (kesintisiz)`:d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
       <div class="detay-tik-row"><span>Dosya Durumu</span><span>${d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç"}</span></div>
     </div>
     ${tahsilatHtml}${vekaletHtml}${hacizHtml}
