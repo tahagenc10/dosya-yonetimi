@@ -103,6 +103,28 @@
     #muvekkil-select:focus{border-color:#6366f1;}
     .btn-muvekkil-yeni{background:#eef2ff;color:#4338ca;border:1.5px solid #c7d2fe;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;}
     .btn-muvekkil-yeni:hover{background:#e0e7ff;}
+    /* Modül seçici */
+    .modul-switch{display:flex;gap:8px;margin-bottom:14px;}
+    .modul-btn{flex:1;padding:13px;border:1.5px solid #e2e8f0;background:#fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#64748b;transition:all .15s;}
+    .modul-btn:hover{border-color:#cbd5e1;}
+    #mbtn-icra.active{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
+    #mbtn-hukuk.active{background:#f0fdf4;border-color:#22c55e;color:#15803d;}
+    .htab-devam.active{color:#16a34a;}
+    .htab-sonuc.active{color:#6366f1;}
+    /* Hukuk kartı (yeşil) */
+    .dosya-card.hukuk{border-left:4px solid #22c55e;}
+    .hukuk-badge{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;}
+    .hukuk-taraf{font-size:12px;color:#475569;}
+    /* Kronoloji / olaylar */
+    .olay-ekle{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+    .olay-ekle input[type=date]{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa;}
+    .olay-ekle textarea{flex:1;min-width:160px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa;font-family:inherit;resize:vertical;}
+    .olay-item{position:relative;padding:8px 12px;border-left:3px solid #22c55e;margin-bottom:8px;background:#f0fdf4;border-radius:0 8px 8px 0;}
+    .olay-item .o-tarih{font-size:11px;color:#15803d;font-weight:700;}
+    .olay-item .o-aciklama{font-size:13px;color:#334155;margin-top:3px;white-space:pre-wrap;line-height:1.45;}
+    .olay-item .o-sil{position:absolute;top:8px;right:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;}
+    .taraf-chip{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border-radius:7px;padding:5px 10px;font-size:13px;margin:0 6px 6px 0;}
+    .taraf-chip button{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;}
     /* Hızlı doldur */
     .hizli-box{background:#eff6ff;border:1.5px dashed #93c5fd;border-radius:12px;padding:12px 14px;}
     .hizli-box label{color:#1d4ed8;}
@@ -258,31 +280,47 @@
         <p id="header-stats">Yükleniyor...</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-yedek" onclick="openIstatistik()">📊 İstatistik</button>
+        <button class="btn-yedek" id="btn-istatistik" onclick="openIstatistik()">📊 İstatistik</button>
         <button class="btn-yedek" onclick="disaAktar()">⬇️ Yedek Al</button>
         <button class="btn-yedek" onclick="cikisYap()">🔒 Çıkış</button>
-        <button class="btn-yeni" onclick="openYeni()">+ Yeni Dosya</button>
+        <button class="btn-yeni" id="btn-yeni-ana" onclick="yeniEkle()">+ Yeni Dosya</button>
       </div>
     </div>
   </div>
 </div>
 <div class="main">
+  <div class="modul-switch">
+    <button id="mbtn-icra" class="modul-btn active" onclick="setModul('icra')">📋 İcra Takipleri</button>
+    <button id="mbtn-hukuk" class="modul-btn" onclick="setModul('hukuk')">⚖️ Hukuk Davaları</button>
+  </div>
   <div class="muvekkil-bar">
     <span class="muvekkil-bar-label">👤 MÜVEKKİL</span>
     <select id="muvekkil-select" onchange="setMuvekkil(this.value)"><option>Yükleniyor...</option></select>
     <button class="btn-muvekkil-yeni" onclick="openYeniMuvekkil()">+ Yeni Müvekkil</button>
   </div>
-  <div id="hatirlatmalar"></div>
-  <input class="search-input" id="arama" placeholder="🔍  Borçlu adı veya dosya no ara (tüm kategorilerde)..." oninput="render()" />
-  <div class="tabs">
-    <button class="tab tab-baslangic active" onclick="setTab('baslangic')">📂 Başlangıç <span id="cnt-baslangic"></span></button>
-    <button class="tab tab-bekleyen" onclick="setTab('bekleyen')">⏳ Bekleyen <span id="cnt-bekleyen"></span></button>
-    <button class="tab tab-kismi" onclick="setTab('kismi')">💵 Kısmi Ödeme <span id="cnt-kismi"></span></button>
-    <button class="tab tab-kesinlesmis" onclick="setTab('kesinlesmis')">🔒 Kesinleşmiş <span id="cnt-kesinlesmis"></span></button>
-    <button class="tab tab-batik" onclick="setTab('batik')">💀 Batık <span id="cnt-batik"></span></button>
-    <button class="tab tab-kapali" onclick="setTab('kapali')">✅ Kapalı <span id="cnt-kapali"></span></button>
+
+  <div id="modul-icra">
+    <div id="hatirlatmalar"></div>
+    <input class="search-input" id="arama" placeholder="🔍  Borçlu adı veya dosya no ara (tüm kategorilerde)..." oninput="render()" />
+    <div class="tabs">
+      <button class="tab tab-baslangic active" onclick="setTab('baslangic')">📂 Başlangıç <span id="cnt-baslangic"></span></button>
+      <button class="tab tab-bekleyen" onclick="setTab('bekleyen')">⏳ Bekleyen <span id="cnt-bekleyen"></span></button>
+      <button class="tab tab-kismi" onclick="setTab('kismi')">💵 Kısmi Ödeme <span id="cnt-kismi"></span></button>
+      <button class="tab tab-kesinlesmis" onclick="setTab('kesinlesmis')">🔒 Kesinleşmiş <span id="cnt-kesinlesmis"></span></button>
+      <button class="tab tab-batik" onclick="setTab('batik')">💀 Batık <span id="cnt-batik"></span></button>
+      <button class="tab tab-kapali" onclick="setTab('kapali')">✅ Kapalı <span id="cnt-kapali"></span></button>
+    </div>
+    <div id="liste"><div style="text-align:center;padding:40px;color:#94a3b8">⏳ Yükleniyor...</div></div>
   </div>
-  <div id="liste"><div style="text-align:center;padding:40px;color:#94a3b8">⏳ Yükleniyor...</div></div>
+
+  <div id="modul-hukuk" style="display:none">
+    <input class="search-input" id="h-arama" placeholder="🔍  Taraf, esas no veya mahkeme ara..." oninput="renderHukuk()" />
+    <div class="tabs">
+      <button class="tab htab-devam active" onclick="setHukukTab('devam')">⚖️ Devam Eden <span id="hcnt-devam"></span></button>
+      <button class="tab htab-sonuc" onclick="setHukukTab('sonuc')">✅ Sonuçlanan <span id="hcnt-sonuc"></span></button>
+    </div>
+    <div id="h-liste"><div style="text-align:center;padding:40px;color:#94a3b8">⏳ Yükleniyor...</div></div>
+  </div>
 </div>
 
 <!-- Form Modal -->
@@ -465,6 +503,102 @@
   </div>
 </div>
 
+<!-- Hukuk Davası Form Modal -->
+<div class="overlay" id="hukuk-form-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-body">
+      <h2 id="h-form-title">Yeni Hukuk Davası</h2>
+      <div class="form-section">
+        <div class="form-section-title">MAHKEME BİLGİLERİ</div>
+        <div class="form-grid">
+          <div class="field"><label>İL</label><input id="h-il" placeholder="Örn: Sakarya" /></div>
+          <div class="field"><label>MAHKEME NO (opsiyonel)</label><input id="h-mahkemeNo" placeholder="Örn: 2" /></div>
+          <div class="field col-span-2"><label>YARGI BİRİMİ</label>
+            <select id="h-yargiBirimi">
+              <option value="">Seçiniz...</option>
+              <option>AİLE MAHKEMESİ</option>
+              <option>ASLİYE HUKUK MAHKEMESİ</option>
+              <option>ASLİYE TİCARET MAHKEMESİ</option>
+              <option>BAM Hukuk Dairesi(İlk Derece)</option>
+              <option>Bölge Adliye Mah. Hukuk Dairesi</option>
+              <option>FİKRİ VE SINAİ HAKLAR HUKUK MAHKEMESİ</option>
+              <option>İCRA HUKUK MAHKEMESİ</option>
+              <option>İŞ MAHKEMESİ</option>
+              <option>KADASTRO MAHKEMESİ</option>
+              <option>KADASTRO MAHKEMESİ(MÜS)</option>
+              <option>SULH HUKUK MAHKEMESİ</option>
+              <option>TÜKETİCİ MAHKEMESİ</option>
+            </select>
+          </div>
+          <div class="field"><label>ESAS NO</label><input id="h-esasNo" placeholder="Örn: 2026/123" /></div>
+          <div class="field"><label>DURUM</label>
+            <select id="h-durum">
+              <option value="devam">Devam Ediyor</option>
+              <option value="sonuc">Sonuçlandı</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">TARAFLAR</div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">DAVACI(LAR)</label>
+          <div id="h-davaci-list"></div>
+          <div class="olay-ekle">
+            <input id="h-davaci-input" placeholder="Davacı ad soyad / ünvan" style="flex:1;min-width:160px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();tarafEkle('davaci')}" />
+            <button type="button" class="btn-vekalet-ekle" onclick="tarafEkle('davaci')">+ Ekle</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">DAVALI(LAR)</label>
+          <div id="h-davali-list"></div>
+          <div class="olay-ekle">
+            <input id="h-davali-input" placeholder="Davalı ad soyad / ünvan" style="flex:1;min-width:160px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();tarafEkle('davali')}" />
+            <button type="button" class="btn-vekalet-ekle" onclick="tarafEkle('davali')">+ Ekle</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">ÜCRET & TAHSİLAT</div>
+        <div class="field" style="margin-bottom:12px"><label>MÜVEKKİL İLE ANLAŞILAN ÜCRET (TL)</label><input id="h-ucret" type="number" placeholder="0.00" oninput="hukukTahsilOzet()" /></div>
+        <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">TAHSİLATLAR</label>
+        <div class="vekalet-list" id="h-tahsil-list"></div>
+        <div class="olay-ekle">
+          <input id="h-tahsil-input" type="number" placeholder="Tutar (TL)" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa;width:110px" />
+          <input id="h-tahsil-tarih" type="date" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa" />
+          <input id="h-tahsil-aciklama" placeholder="Açıklama (opsiyonel)" style="flex:1;min-width:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" />
+          <button type="button" class="btn-vekalet-ekle" onclick="hukukTahsilEkle()">+ Ekle</button>
+        </div>
+        <div id="h-tahsil-ozet" style="font-size:13px;font-weight:700;text-align:right;margin-top:8px;color:#16a34a"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">KRONOLOJİ (OLAYLAR / GÜNCELLEMELER)</div>
+        <div class="olay-ekle">
+          <input id="h-olay-tarih" type="date" />
+          <textarea id="h-olay-aciklama" rows="2" placeholder="Ör: Dava dilekçesi sunuldu / duruşma yapıldı / bilirkişi raporu geldi..."></textarea>
+          <button type="button" class="btn-vekalet-ekle" onclick="olayEkle()" style="align-self:flex-start">+ Ekle</button>
+        </div>
+        <div id="h-olay-list"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">KİŞİSEL NOTLAR</div>
+        <div class="field"><textarea id="h-notlar" rows="3" placeholder="Bu dosyaya özel serbest notların..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="document.getElementById('hukuk-form-modal').style.display='none'">İptal</button>
+        <button class="btn-save" id="h-btn-kaydet" onclick="hukukKaydet()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hukuk Detay Modal -->
+<div class="overlay" id="hukuk-detay-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-body" id="hukuk-detay-icerik"></div>
+  </div>
+</div>
+
 <!-- Silme Onayı -->
 <div class="overlay" id="sil-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
@@ -474,6 +608,20 @@
       <div class="onay-actions">
         <button class="btn-iptal" onclick="document.getElementById('sil-modal').style.display='none'">İptal</button>
         <button class="btn-sil-onay" onclick="silOnayla()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hukuk Silme Onayı -->
+<div class="overlay" id="hukuk-sil-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="onay-body">
+      <h3>Bu hukuk davasını silmek istediğine emin misin?</h3>
+      <p>Bu işlem geri alınamaz.</p>
+      <div class="onay-actions">
+        <button class="btn-iptal" onclick="document.getElementById('hukuk-sil-modal').style.display='none'">İptal</button>
+        <button class="btn-sil-onay" onclick="hukukSilOnayla()">Evet, Sil</button>
       </div>
     </div>
   </div>
@@ -581,6 +729,9 @@ function uygulamayaGir(){
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
 let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
 let muvekkiller=[],aktifMuvekkil=null;
+let aktifModul="icra";
+let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
+let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[];
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[];
 
@@ -610,7 +761,7 @@ function muvekkilSelectDoldur(){
   sel.innerHTML=muvekkiller.map(m=>`<option value="${m.id}">${m.ad}</option>`).join("");
   if(aktifMuvekkil)sel.value=aktifMuvekkil;
 }
-function setMuvekkil(id){aktifMuvekkil=id;localStorage.setItem("aktif-muvekkil",id);render();}
+function setMuvekkil(id){aktifMuvekkil=id;localStorage.setItem("aktif-muvekkil",id);render();renderHukuk();}
 // Aktif müvekkile ait dosyalar; müvekkil sistemi henüz kurulu değilse tüm dosyalar (veri kaybı olmasın)
 function aktifDosyalar(){
   if(!aktifMuvekkil||muvekkiller.length===0)return dosyalar;
@@ -647,6 +798,8 @@ async function yukle(){
     hacizler:d.hacizler,notlar:d.notlar,
   }));
   render();
+  await hukukYukle();
+  setModul(localStorage.getItem("aktif-modul")||"icra");
 }
 
 function setTab(tab){
@@ -946,11 +1099,11 @@ function openSil(id){silId=id;document.getElementById("sil-modal").style.display
 async function silOnayla(){const{error}=await db.from("dosyalar").delete().eq("id",silId);if(error){toast("❌ Silinemedi!");return;}toast("🗑️ Silindi!");document.getElementById("sil-modal").style.display="none";silId=null;await yukle();}
 
 function disaAktar(){
-  const veri=JSON.stringify(dosyalar,null,2);
+  const veri=JSON.stringify({dosyalar,hukuk_davalari:hukukDavalar,muvekkiller},null,2);
   const blob=new Blob([veri],{type:"application/json"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-  a.href=url;a.download="icra-yedek-"+new Date().toISOString().slice(0,10)+".json";
+  a.href=url;a.download="yedek-"+new Date().toISOString().slice(0,10)+".json";
   a.click();URL.revokeObjectURL(url);
   toast("✅ Yedek alındı!");
 }
@@ -1013,6 +1166,209 @@ function openIstatistik(){
     ${chart}
     <div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById('istatistik-modal').style.display='none'">Kapat</button></div>`;
   document.getElementById("istatistik-modal").style.display="flex";
+}
+
+/* ---------- Hukuk Davaları Modülü ---------- */
+function setModul(m){
+  aktifModul=m;localStorage.setItem("aktif-modul",m);
+  document.getElementById("mbtn-icra").classList.toggle("active",m==="icra");
+  document.getElementById("mbtn-hukuk").classList.toggle("active",m==="hukuk");
+  document.getElementById("modul-icra").style.display=m==="icra"?"":"none";
+  document.getElementById("modul-hukuk").style.display=m==="hukuk"?"":"none";
+  document.getElementById("btn-yeni-ana").textContent=m==="hukuk"?"+ Yeni Dava":"+ Yeni Dosya";
+  document.getElementById("btn-istatistik").style.display=m==="hukuk"?"none":"";
+  if(m==="hukuk")renderHukuk();else render();
+}
+function yeniEkle(){if(aktifModul==="hukuk")openYeniHukuk();else openYeni();}
+
+async function hukukYukle(){
+  const{data,error}=await db.from("hukuk_davalari").select("*").order("olusturma_tarihi",{ascending:false});
+  if(error){hukukDavalar=[];renderHukuk();return;}
+  hukukDavalar=(data||[]).map(d=>({
+    id:d.id,muvekkilId:d.muvekkil_id||null,il:d.il,yargiBirimi:d.yargi_birimi,mahkemeNo:d.mahkeme_no,esasNo:d.esas_no,
+    davacilar:d.davacilar?JSON.parse(d.davacilar):[],davalilar:d.davalilar?JSON.parse(d.davalilar):[],
+    ucret:d.anlasilan_ucret,tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
+    notlar:d.notlar,olaylar:d.olaylar?JSON.parse(d.olaylar):[],durum:d.durum||"devam",
+  }));
+  renderHukuk();
+}
+function aktifHukukDavalar(){
+  return hukukDavalar.filter(d=>!aktifMuvekkil||muvekkiller.length===0||d.muvekkilId===aktifMuvekkil);
+}
+function setHukukTab(t){
+  hukukAktifTab=t;
+  document.querySelectorAll("#modul-hukuk .tab").forEach(x=>x.classList.remove("active"));
+  document.querySelector(".htab-"+t).classList.add("active");
+  renderHukuk();
+}
+function hukukMahkemeMetin(d){return [d.il,d.mahkemeNo?d.mahkemeNo+".":"",d.yargiBirimi].filter(Boolean).join(" ");}
+function renderHukuk(){
+  const veri=aktifHukukDavalar();
+  const metin=(document.getElementById("h-arama")?.value||"").toLowerCase();
+  const cd=document.getElementById("hcnt-devam"),cs=document.getElementById("hcnt-sonuc");
+  if(cd)cd.textContent=`(${veri.filter(d=>(d.durum||"devam")==="devam").length})`;
+  if(cs)cs.textContent=`(${veri.filter(d=>d.durum==="sonuc").length})`;
+  const filtered=veri.filter(d=>{
+    const hedef=[(d.davacilar||[]).join(" "),(d.davalilar||[]).join(" "),d.esasNo,d.il,d.yargiBirimi].join(" ").toLowerCase();
+    const eslesme=!metin||hedef.includes(metin);
+    return metin?eslesme:(eslesme&&(d.durum||"devam")===hukukAktifTab);
+  });
+  const el=document.getElementById("h-liste");if(!el)return;
+  if(filtered.length===0){el.innerHTML=`<div class="empty-state"><div style="font-size:36px;margin-bottom:10px">⚖️</div><strong style="color:#64748b;display:block">Dava bulunamadı</strong></div>`;return;}
+  el.innerHTML=`<div class="dosya-list">${filtered.map(d=>{
+    const toplamTahsil=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
+    const ucret=parseFloat(d.ucret)||0;const kalan=ucret-toplamTahsil;
+    const mahkeme=hukukMahkemeMetin(d);
+    const baslik=`${(d.davacilar||[]).join(", ")||"—"} <span style="color:#94a3b8">/</span> ${(d.davalilar||[]).join(", ")||"—"}`;
+    return`<div class="dosya-card hukuk" onclick="openHukukDetay('${d.id}')">
+      <div>
+        <div class="dosya-title"><span class="isim">${baslik}</span>${d.esasNo?`<span class="dosyano">${d.esasNo}</span>`:""}${d.durum==="sonuc"?`<span class="hukuk-badge">✅ Sonuçlandı</span>`:""}</div>
+        <div class="dosya-meta">
+          ${mahkeme?`<span>🏛️ ${mahkeme}</span>`:""}
+          ${ucret>0?`<span class="miktar">${formatCurrency(ucret)} ücret</span>`:""}
+          ${toplamTahsil>0?`<span class="tahsil">✓ ${formatCurrency(toplamTahsil)} tahsil</span>`:""}
+          ${(ucret>0&&kalan>0)?`<span style="color:#e85d4a;font-weight:600">Kalan: ${formatCurrency(kalan)}</span>`:""}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-edit" onclick="event.stopPropagation();openHukukDuzenle('${d.id}')">✏️</button>
+        <button class="btn-del" onclick="event.stopPropagation();openHukukSil('${d.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function tarafEkle(tip){
+  const inp=document.getElementById(tip==="davaci"?"h-davaci-input":"h-davali-input");
+  const val=inp.value.trim();if(!val)return;
+  (tip==="davaci"?hDavacilar:hDavalilar).push(val);
+  inp.value="";renderTaraflar();inp.focus();
+}
+function tarafSil(tip,i){(tip==="davaci"?hDavacilar:hDavalilar).splice(i,1);renderTaraflar();}
+function renderTaraflar(){
+  document.getElementById("h-davaci-list").innerHTML=hDavacilar.map((n,i)=>`<span class="taraf-chip">${n}<button type="button" onclick="tarafSil('davaci',${i})">✕</button></span>`).join("");
+  document.getElementById("h-davali-list").innerHTML=hDavalilar.map((n,i)=>`<span class="taraf-chip">${n}<button type="button" onclick="tarafSil('davali',${i})">✕</button></span>`).join("");
+}
+function hukukTahsilEkle(){
+  const t=document.getElementById("h-tahsil-input").value;const tar=document.getElementById("h-tahsil-tarih").value;const a=document.getElementById("h-tahsil-aciklama").value;
+  if(!t)return;
+  hTahsilatlar.push({tutar:parseFloat(t),tarih:tar||bugun(),aciklama:a});
+  document.getElementById("h-tahsil-input").value="";document.getElementById("h-tahsil-aciklama").value="";document.getElementById("h-tahsil-tarih").value=bugun();
+  renderHukukTahsil();
+}
+function hukukTahsilSil(i){hTahsilatlar.splice(i,1);renderHukukTahsil();}
+function renderHukukTahsil(){
+  document.getElementById("h-tahsil-list").innerHTML=hTahsilatlar.map((t,i)=>`<div class="vekalet-item"><span>${t.aciklama||"Tahsilat"}${t.tarih?` <small style="color:#94a3b8">${formatDate(t.tarih)}</small>`:""}</span><small>${formatCurrency(t.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="hukukTahsilSil(${i})">✕</button></div>`).join("");
+  hukukTahsilOzet();
+}
+function hukukTahsilOzet(){
+  const top=hTahsilatlar.reduce((s,t)=>s+(t.tutar||0),0);
+  const ucret=parseFloat(document.getElementById("h-ucret").value)||0;const kalan=ucret-top;
+  document.getElementById("h-tahsil-ozet").innerHTML=hTahsilatlar.length||ucret?`Tahsil edilen: ${formatCurrency(top)}${ucret>0?` · Kalan: <span style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</span>`:""}`:"";
+}
+function olayEkle(){
+  const tar=document.getElementById("h-olay-tarih").value;const a=document.getElementById("h-olay-aciklama").value.trim();
+  if(!a){toast("Olay açıklaması gir");return;}
+  hOlaylar.push({tarih:tar||bugun(),aciklama:a});
+  document.getElementById("h-olay-aciklama").value="";document.getElementById("h-olay-tarih").value=bugun();
+  renderOlaylar();
+}
+function olaySil(i){hOlaylar.splice(i,1);renderOlaylar();}
+function renderOlaylar(){
+  const sirali=hOlaylar.map((o,i)=>({...o,i})).sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+  document.getElementById("h-olay-list").innerHTML=sirali.map(o=>`<div class="olay-item"><button type="button" class="o-sil" onclick="olaySil(${o.i})">✕</button><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join("");
+}
+function hukukResetForm(){
+  ["h-il","h-mahkemeNo","h-esasNo","h-ucret","h-notlar","h-davaci-input","h-davali-input","h-tahsil-input","h-tahsil-aciklama","h-olay-aciklama"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("h-yargiBirimi").value="";
+  document.getElementById("h-durum").value="devam";
+  document.getElementById("h-tahsil-tarih").value=bugun();
+  document.getElementById("h-olay-tarih").value=bugun();
+  hDavacilar=[];hDavalilar=[];hTahsilatlar=[];hOlaylar=[];
+  renderTaraflar();renderHukukTahsil();renderOlaylar();
+}
+function openYeniHukuk(){hukukEditId=null;document.getElementById("h-form-title").textContent="Yeni Hukuk Davası";hukukResetForm();document.getElementById("hukuk-form-modal").style.display="flex";}
+function openHukukDuzenle(id){
+  const d=hukukDavalar.find(x=>x.id===id);if(!d)return;
+  hukukEditId=id;document.getElementById("h-form-title").textContent="Davayı Düzenle";
+  hukukResetForm();
+  document.getElementById("h-il").value=d.il||"";
+  document.getElementById("h-mahkemeNo").value=d.mahkemeNo||"";
+  document.getElementById("h-yargiBirimi").value=d.yargiBirimi||"";
+  document.getElementById("h-esasNo").value=d.esasNo||"";
+  document.getElementById("h-durum").value=d.durum||"devam";
+  document.getElementById("h-ucret").value=d.ucret||"";
+  document.getElementById("h-notlar").value=d.notlar||"";
+  hDavacilar=[...(d.davacilar||[])];hDavalilar=[...(d.davalilar||[])];hTahsilatlar=[...(d.tahsilatlar||[])];hOlaylar=[...(d.olaylar||[])];
+  renderTaraflar();renderHukukTahsil();renderOlaylar();
+  document.getElementById("hukuk-form-modal").style.display="flex";
+  document.getElementById("hukuk-detay-modal").style.display="none";
+}
+async function hukukKaydet(){
+  const btn=document.getElementById("h-btn-kaydet");btn.textContent="Kaydediliyor...";btn.disabled=true;
+  const kayit={
+    muvekkil_id:hukukEditId?(hukukDavalar.find(x=>x.id===hukukEditId)?.muvekkilId||aktifMuvekkil||"alfatek"):(aktifMuvekkil||"alfatek"),
+    il:document.getElementById("h-il").value||null,
+    yargi_birimi:document.getElementById("h-yargiBirimi").value||null,
+    mahkeme_no:document.getElementById("h-mahkemeNo").value||null,
+    esas_no:document.getElementById("h-esasNo").value||null,
+    davacilar:JSON.stringify(hDavacilar),davalilar:JSON.stringify(hDavalilar),
+    anlasilan_ucret:document.getElementById("h-ucret").value||null,
+    tahsilatlar:JSON.stringify(hTahsilatlar),
+    notlar:document.getElementById("h-notlar").value||null,
+    olaylar:JSON.stringify(hOlaylar),
+    durum:document.getElementById("h-durum").value,
+  };
+  let error;
+  if(hukukEditId){({error}=await db.from("hukuk_davalari").update(kayit).eq("id",hukukEditId));}
+  else{kayit.id=Date.now().toString();({error}=await db.from("hukuk_davalari").insert(kayit));}
+  btn.textContent="Kaydet";btn.disabled=false;
+  if(error){toast("❌ Hata: "+error.message);return;}
+  toast(hukukEditId?"✅ Dava güncellendi!":"✅ Dava eklendi!");
+  document.getElementById("hukuk-form-modal").style.display="none";
+  await hukukYukle();
+}
+function openHukukDetay(id){
+  const d=hukukDavalar.find(x=>x.id===id);if(!d)return;
+  const toplamTahsil=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
+  const ucret=parseFloat(d.ucret)||0;const kalan=ucret-toplamTahsil;
+  const mahkeme=hukukMahkemeMetin(d);
+  const olaySirali=[...(d.olaylar||[])].sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+  document.getElementById("hukuk-detay-icerik").innerHTML=`
+    <div class="detay-header">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${(d.davacilar||[]).join(", ")||"—"} <span style="color:#94a3b8">/</span> ${(d.davalilar||[]).join(", ")||"—"}</h2>
+        ${d.esasNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#16a34a;font-weight:600">${d.esasNo}</span>`:""}
+        ${mahkeme?`<span style="font-size:12px;color:#64748b;margin-left:8px">· ${mahkeme}</span>`:""}
+        <span class="hukuk-badge" style="margin-left:8px">${d.durum==="sonuc"?"✅ Sonuçlandı":"⚖️ Devam Ediyor"}</span>
+      </div>
+      <button class="btn-close" onclick="document.getElementById('hukuk-detay-modal').style.display='none'">✕</button>
+    </div>
+    <div class="detay-grid">
+      ${ucret>0?`<div class="detay-field"><div class="lbl">ANLAŞILAN ÜCRET</div><div class="val">${formatCurrency(ucret)}</div></div>`:""}
+      ${toplamTahsil>0?`<div class="detay-field"><div class="lbl">TAHSİL EDİLEN</div><div class="val" style="color:#16a34a">${formatCurrency(toplamTahsil)}</div></div>`:""}
+      ${ucret>0?`<div class="detay-field"><div class="lbl">KALAN</div><div class="val" style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</div></div>`:""}
+    </div>
+    <div class="detay-section"><div class="lbl">TARAFLAR</div>
+      <div class="detay-tik-row"><span>Davacı</span><span>${(d.davacilar||[]).join(", ")||"—"}</span></div>
+      <div class="detay-tik-row"><span>Davalı</span><span>${(d.davalilar||[]).join(", ")||"—"}</span></div>
+    </div>
+    ${(d.tahsilatlar||[]).length?`<div class="detay-section detay-mali"><div class="lbl">💰 TAHSİLATLAR</div>${d.tahsilatlar.map(t=>`<div class="detay-mali-row"><span>${t.aciklama||"Tahsilat"}${t.tarih?` · ${formatDate(t.tarih)}`:""}</span><span>${formatCurrency(t.tutar)}</span></div>`).join("")}<div class="detay-mali-row"><span>TOPLAM</span><span>${formatCurrency(toplamTahsil)}</span></div></div>`:""}
+    ${olaySirali.length?`<div class="detay-section"><div class="lbl">🕒 KRONOLOJİ</div>${olaySirali.map(o=>`<div class="olay-item"><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join("")}</div>`:""}
+    ${d.notlar?`<div class="detay-section detay-not"><div class="lbl">📝 NOTLAR</div><div style="font-size:13px;color:#475569;white-space:pre-wrap;line-height:1.5">${d.notlar}</div></div>`:""}
+    <div class="detay-actions">
+      <button class="btn-duzenle" onclick="openHukukDuzenle('${d.id}')">✏️ Düzenle</button>
+      <button class="btn-sil2" onclick="openHukukSil('${d.id}')">🗑️ Sil</button>
+    </div>`;
+  document.getElementById("hukuk-detay-modal").style.display="flex";
+}
+function openHukukSil(id){hukukSilId=id;document.getElementById("hukuk-sil-modal").style.display="flex";document.getElementById("hukuk-detay-modal").style.display="none";}
+async function hukukSilOnayla(){
+  if(!hukukSilId)return;
+  const{error}=await db.from("hukuk_davalari").delete().eq("id",hukukSilId);
+  document.getElementById("hukuk-sil-modal").style.display="none";
+  if(error){toast("❌ Silinemedi: "+error.message);return;}
+  toast("🗑️ Dava silindi");hukukSilId=null;await hukukYukle();
 }
 
 authInit();
