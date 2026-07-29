@@ -96,6 +96,13 @@
     .bolum-btn.active[data-bolum="kesinlesmis"]{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
     .bolum-btn.active[data-bolum="batik"]{background:#f1f5f9;border-color:#94a3b8;color:#475569;}
     .bolum-btn.active[data-bolum="kapali"]{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
+    /* Müvekkil çubuğu */
+    .muvekkil-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+    .muvekkil-bar-label{font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.05em;}
+    #muvekkil-select{flex:1;min-width:180px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:14px;font-weight:600;color:#1e293b;background:#fafafa;outline:none;cursor:pointer;}
+    #muvekkil-select:focus{border-color:#6366f1;}
+    .btn-muvekkil-yeni{background:#eef2ff;color:#4338ca;border:1.5px solid #c7d2fe;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;}
+    .btn-muvekkil-yeni:hover{background:#e0e7ff;}
     /* Hızlı doldur */
     .hizli-box{background:#eff6ff;border:1.5px dashed #93c5fd;border-radius:12px;padding:12px 14px;}
     .hizli-box label{color:#1d4ed8;}
@@ -260,6 +267,11 @@
   </div>
 </div>
 <div class="main">
+  <div class="muvekkil-bar">
+    <span class="muvekkil-bar-label">👤 MÜVEKKİL</span>
+    <select id="muvekkil-select" onchange="setMuvekkil(this.value)"><option>Yükleniyor...</option></select>
+    <button class="btn-muvekkil-yeni" onclick="openYeniMuvekkil()">+ Yeni Müvekkil</button>
+  </div>
   <div id="hatirlatmalar"></div>
   <input class="search-input" id="arama" placeholder="🔍  Borçlu adı veya dosya no ara (tüm kategorilerde)..." oninput="render()" />
   <div class="tabs">
@@ -438,6 +450,21 @@
   </div>
 </div>
 
+<!-- Yeni Müvekkil Modal -->
+<div class="overlay" id="muvekkil-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="onay-body">
+      <h3>Yeni Müvekkil Ekle</h3>
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:14px">Müvekkilin adını / şirket ünvanını gir. Sonra bu müvekkili seçip dosyalarını ekleyebilirsin.</p>
+      <input id="muvekkil-input" placeholder="Örn: Örnek Danışmanlık Ltd. Şti." style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:16px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')muvekkilKaydet()" />
+      <div class="onay-actions">
+        <button class="btn-iptal" onclick="document.getElementById('muvekkil-modal').style.display='none'">İptal</button>
+        <button class="btn-save" onclick="muvekkilKaydet()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Silme Onayı -->
 <div class="overlay" id="sil-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
@@ -553,6 +580,7 @@ function uygulamayaGir(){
 }
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
 let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
+let muvekkiller=[],aktifMuvekkil=null;
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[];
 
@@ -563,11 +591,51 @@ function bugun(){return new Date().toISOString().split("T")[0];}
 // Yıl kaydın içinde "YIL/NUMARA" olarak saklanır. Eski kayıtlar sadece numara içerdiği için varsayılan 2026 gösterilir.
 function dosyaNoGoster(no){if(!no)return"";return String(no).includes("/")?no:"2026/"+no;}
 
+async function muvekkilleriYukle(){
+  const{data,error}=await db.from("muvekkiller").select("*").order("ad");
+  if(error){muvekkiller=[];aktifMuvekkil=null;muvekkilSelectDoldur();return;}
+  muvekkiller=(data||[]).map(m=>({id:m.id,ad:m.ad}));
+  const kayitli=localStorage.getItem("aktif-muvekkil");
+  if(kayitli&&muvekkiller.some(m=>m.id===kayitli))aktifMuvekkil=kayitli;
+  else if(muvekkiller.some(m=>m.id==="alfatek"))aktifMuvekkil="alfatek";
+  else if(muvekkiller.length)aktifMuvekkil=muvekkiller[0].id;
+  else aktifMuvekkil=null;
+  muvekkilSelectDoldur();
+}
+function muvekkilSelectDoldur(){
+  const sel=document.getElementById("muvekkil-select");
+  if(!sel)return;
+  if(muvekkiller.length===0){sel.innerHTML=`<option>Tüm dosyalar</option>`;sel.disabled=true;return;}
+  sel.disabled=false;
+  sel.innerHTML=muvekkiller.map(m=>`<option value="${m.id}">${m.ad}</option>`).join("");
+  if(aktifMuvekkil)sel.value=aktifMuvekkil;
+}
+function setMuvekkil(id){aktifMuvekkil=id;localStorage.setItem("aktif-muvekkil",id);render();}
+// Aktif müvekkile ait dosyalar; müvekkil sistemi henüz kurulu değilse tüm dosyalar (veri kaybı olmasın)
+function aktifDosyalar(){
+  if(!aktifMuvekkil||muvekkiller.length===0)return dosyalar;
+  return dosyalar.filter(d=>(d.muvekkilId||"alfatek")===aktifMuvekkil);
+}
+function openYeniMuvekkil(){document.getElementById("muvekkil-input").value="";document.getElementById("muvekkil-modal").style.display="flex";setTimeout(()=>document.getElementById("muvekkil-input").focus(),100);}
+async function muvekkilKaydet(){
+  const ad=document.getElementById("muvekkil-input").value.trim();
+  if(!ad){return;}
+  const id=Date.now().toString();
+  const{error}=await db.from("muvekkiller").insert({id,ad});
+  if(error){toast("❌ Müvekkil eklenemedi: "+error.message);return;}
+  document.getElementById("muvekkil-modal").style.display="none";
+  localStorage.setItem("aktif-muvekkil",id);
+  await muvekkilleriYukle();
+  render();
+  toast("✅ Müvekkil eklendi!");
+}
+
 async function yukle(){
+  await muvekkilleriYukle();
   const{data,error}=await db.from("dosyalar").select("*").order("olusturma_tarihi",{ascending:false});
   if(error){toast("❌ Yüklenemedi!");return;}
   dosyalar=(data||[]).map(d=>({
-    id:d.id,borclu:d.borclu,daire:d.daire,dosyaNo:d.dosya_no,borcMiktar:d.borc_miktar,
+    id:d.id,borclu:d.borclu,daire:d.daire,dosyaNo:d.dosya_no,borcMiktar:d.borc_miktar,muvekkilId:d.muvekkil_id||null,
     takipTarihi:d.takip_tarihi,hatirlatmaTarihi:d.hatirlatma_tarihi,bolum:d.bolum||"baslangic",
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
@@ -590,16 +658,17 @@ function setTab(tab){
 
 function render(){
   const metin=document.getElementById("arama").value.toLowerCase();
+  const veri=aktifDosyalar();
   ["baslangic","bekleyen","kismi","kesinlesmis","batik","kapali"].forEach(b=>{
     const el=document.getElementById("cnt-"+b);
-    if(el)el.textContent=`(${dosyalar.filter(d=>d.bolum===b).length})`;
+    if(el)el.textContent=`(${veri.filter(d=>d.bolum===b).length})`;
   });
-  const toplam=dosyalar.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
-  const toplamTahsil=dosyalar.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
-  document.getElementById("header-stats").textContent=`${dosyalar.length} dosya · Toplam: ${formatCurrency(toplam)} · Tahsil: ${formatCurrency(toplamTahsil)}`;
-  const hat=dosyalar.filter(d=>d.hatirlatmaTarihi&&d.hatirlatmaTarihi<=bugun()&&d.bolum!=="batik"&&d.bolum!=="kapali");
+  const toplam=veri.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
+  const toplamTahsil=veri.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
+  document.getElementById("header-stats").textContent=`${veri.length} dosya · Toplam: ${formatCurrency(toplam)} · Tahsil: ${formatCurrency(toplamTahsil)}`;
+  const hat=veri.filter(d=>d.hatirlatmaTarihi&&d.hatirlatmaTarihi<=bugun()&&d.bolum!=="batik"&&d.bolum!=="kapali");
   document.getElementById("hatirlatmalar").innerHTML=hat.length>0?`<div class="hatirlatma-box"><strong>🔔 Bugün veya geçmiş hatırlatmalar:</strong><div class="hatirlatma-items">${hat.map(d=>`<span class="hatirlatma-item" onclick="openDetay('${d.id}')">${d.borclu} — ${formatDate(d.hatirlatmaTarihi)}</span>`).join("")}</div></div>`:"";
-  const filtered=dosyalar.filter(d=>{
+  const filtered=veri.filter(d=>{
     const eslesme=!metin||d.borclu?.toLowerCase().includes(metin)||d.dosyaNo?.toLowerCase().includes(metin);
     return metin?eslesme:(eslesme&&d.bolum===aktifTab);
   });
@@ -822,6 +891,7 @@ async function kaydet(){
     haciz_secili:JSON.stringify(getSeciliHacizler()),
     hacizler:document.getElementById("f-hacizler").value||null,
     notlar:document.getElementById("f-notlar").value||null,
+    muvekkil_id:editId?(dosyalar.find(x=>x.id===editId)?.muvekkilId||aktifMuvekkil||"alfatek"):(aktifMuvekkil||"alfatek"),
   };
   let error;
   if(editId){({error}=await db.from("dosyalar").update(kayit).eq("id",editId));}
@@ -887,9 +957,10 @@ function disaAktar(){
 
 const AY_KISA=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
 function openIstatistik(){
-  const toplamBorc=dosyalar.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
-  const toplamTahsilat=dosyalar.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
-  const toplamVekalet=dosyalar.reduce((s,d)=>s+(d.vekaletler||[]).reduce((a,v)=>a+(parseFloat(v.tutar)||0),0),0);
+  const veri=aktifDosyalar();
+  const toplamBorc=veri.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
+  const toplamTahsilat=veri.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
+  const toplamVekalet=veri.reduce((s,d)=>s+(d.vekaletler||[]).reduce((a,v)=>a+(parseFloat(v.tutar)||0),0),0);
   const oran=toplamBorc>0?Math.min(100,toplamTahsilat/toplamBorc*100):0;
   const asamalar=[
     {key:"baslangic",lbl:"📂 Başlangıç",renk:"#e85d4a"},
@@ -898,11 +969,11 @@ function openIstatistik(){
     {key:"kesinlesmis",lbl:"🔒 Kesinleşmiş",renk:"#6366f1"},
     {key:"batik",lbl:"💀 Batık",renk:"#94a3b8"},
     {key:"kapali",lbl:"✅ Kapalı",renk:"#22c55e"},
-  ].map(a=>({...a,cnt:dosyalar.filter(d=>d.bolum===a.key).length}));
+  ].map(a=>({...a,cnt:veri.filter(d=>d.bolum===a.key).length}));
   const maxAsama=Math.max(1,...asamalar.map(a=>a.cnt));
   const aylar={};
   const ekle=(kalem,tip)=>{(kalem||[]).forEach(x=>{const tar=x.tarih;const key=tar&&/^\d{4}-\d{2}/.test(tar)?tar.slice(0,7):"tarihsiz";if(!aylar[key])aylar[key]={t:0,v:0};aylar[key][tip]+=parseFloat(x.tutar)||0;});};
-  dosyalar.forEach(d=>{ekle(d.tahsilatlar,"t");ekle(d.vekaletler,"v");});
+  veri.forEach(d=>{ekle(d.tahsilatlar,"t");ekle(d.vekaletler,"v");});
   const ayKeys=Object.keys(aylar).sort((a,b)=>a==="tarihsiz"?1:b==="tarihsiz"?-1:a.localeCompare(b));
   const maxAy=Math.max(1,...ayKeys.map(k=>Math.max(aylar[k].t,aylar[k].v)));
   const ayLabel=k=>{if(k==="tarihsiz")return"Tarihsiz";const[y,m]=k.split("-");return AY_KISA[parseInt(m,10)-1]+" "+y;};
@@ -921,12 +992,12 @@ function openIstatistik(){
     :`<div class="ist-empty">Henüz tarihli tahsilat/vekalet kaydı yok.</div>`;
   document.getElementById("istatistik-icerik").innerHTML=`
     <div class="ist-title">📊 İstatistikler</div>
-    <div class="ist-sub">${dosyalar.length} dosya · ${bugun().split("-").reverse().join(".")} itibarıyla</div>
+    <div class="ist-sub">${(muvekkiller.find(m=>m.id===aktifMuvekkil)?.ad)||"Tüm dosyalar"} · ${veri.length} dosya · ${bugun().split("-").reverse().join(".")} itibarıyla</div>
     <div class="ist-kpi-grid">
       <div class="ist-kpi"><div class="k-lbl">Toplam Borç</div><div class="k-val" style="color:#1e293b">${formatCurrency(toplamBorc)}</div></div>
       <div class="ist-kpi"><div class="k-lbl">Toplam Tahsilat</div><div class="k-val" style="color:#16a34a">${formatCurrency(toplamTahsilat)}</div></div>
       <div class="ist-kpi"><div class="k-lbl">Toplam Vekalet</div><div class="k-val" style="color:#d4a017">${formatCurrency(toplamVekalet)}</div></div>
-      <div class="ist-kpi"><div class="k-lbl">Toplam Dosya</div><div class="k-val" style="color:#6366f1">${dosyalar.length}</div></div>
+      <div class="ist-kpi"><div class="k-lbl">Toplam Dosya</div><div class="k-val" style="color:#6366f1">${veri.length}</div></div>
     </div>
     <div class="ist-sec-title">Tahsilat Oranı</div>
     <div class="ist-oran-wrap">
