@@ -231,6 +231,32 @@
     .ist-dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
     .ist-empty{text-align:center;color:#94a3b8;padding:24px;font-size:13px;}
     @media(max-width:600px){.ist-kpi-grid{grid-template-columns:1fr;}}
+    /* UYAP tarzı sekmeli detay */
+    .modal.wide{max-width:960px;}
+    .uyap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #eef2f7;}
+    .uyap-head .u-title{font-size:16px;font-weight:800;color:#1e293b;line-height:1.35;}
+    .uyap-head .u-sub{font-size:12.5px;color:#64748b;margin-top:3px;font-family:'DM Mono',monospace;}
+    .uyap-tabs{display:flex;gap:2px;border-bottom:2px solid #e2e8f0;margin:14px 0 16px;overflow-x:auto;}
+    .uyap-tab{padding:9px 15px;border:none;background:none;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+    .uyap-tab:hover{color:#334155;}
+    .uyap-tab.active{color:#4338ca;border-bottom-color:#6366f1;}
+    .uyap-detay.hukuk .uyap-tab.active{color:#15803d;border-bottom-color:#22c55e;}
+    .uyap-panel{display:none;}
+    .uyap-panel.active{display:block;}
+    .uyap-kv{width:100%;border-collapse:collapse;font-size:13.5px;}
+    .uyap-kv td{padding:10px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
+    .uyap-kv tr:last-child td{border-bottom:none;}
+    .uyap-kv td.k{color:#64748b;font-weight:600;width:38%;}
+    .uyap-kv td.v{color:#1e293b;font-weight:600;}
+    .uyap-table{width:100%;border-collapse:collapse;font-size:13px;}
+    .uyap-table th{text-align:left;background:#f8fafc;color:#64748b;font-weight:700;font-size:11px;letter-spacing:.03em;text-transform:uppercase;padding:9px 10px;border-bottom:1.5px solid #e2e8f0;}
+    .uyap-table td{padding:9px 10px;border-bottom:1px solid #f1f5f9;color:#334155;}
+    .uyap-table tr:last-child td{border-bottom:none;}
+    .uyap-empty{color:#94a3b8;font-size:13px;padding:16px 4px;text-align:center;}
+    .uyap-total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;padding:10px 10px 2px;border-top:1.5px solid #e2e8f0;margin-top:2px;}
+    .uyap-rol{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;}
+    .uyap-rol.davaci{background:#eff6ff;color:#1d4ed8;}
+    .uyap-rol.davali{background:#fef2f2;color:#dc2626;}
   </style>
 </head>
 <body>
@@ -477,7 +503,7 @@
 
 <!-- Detay Modal -->
 <div class="overlay" id="detay-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-body" id="detay-icerik"></div>
   </div>
 </div>
@@ -595,7 +621,7 @@
 
 <!-- Hukuk Detay Modal -->
 <div class="overlay" id="hukuk-detay-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-body" id="hukuk-detay-icerik"></div>
   </div>
 </div>
@@ -1057,41 +1083,63 @@ async function kaydet(){
   await yukle();
 }
 
+function uyapTab(btn,idx){
+  const wrap=btn.closest(".uyap-detay");
+  wrap.querySelectorAll(".uyap-tab").forEach((t,i)=>t.classList.toggle("active",i===idx));
+  wrap.querySelectorAll(".uyap-panel").forEach((p,i)=>p.classList.toggle("active",i===idx));
+}
 function openDetay(id){
   const d=dosyalar.find(x=>x.id===id);if(!d)return;
   const hs=d.hacizSecili||[];
   const toplamVekalet=(d.vekaletler||[]).reduce((s,v)=>s+(parseFloat(v.tutar)||0),0);
   const toplamTahsilat=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
-  const tahsilatHtml=(d.tahsilatlar||[]).length>0?`<div class="detay-section detay-mali"><div class="lbl">💰 TAHSİLATLAR</div>${d.tahsilatlar.map(t=>`<div class="detay-mali-row"><span>${t.aciklama||"Tahsilat"}</span><span>${formatCurrency(t.tutar)}</span></div>`).join("")}<div class="detay-mali-row"><span>TOPLAM</span><span>${formatCurrency(toplamTahsilat)}</span></div></div>`:"";
-  const vekaletHtml=(d.vekaletler||[]).length>0?`<div class="detay-section detay-vekalet"><div class="lbl">⚖️ VEKALET ÜCRETLERİ</div>${d.vekaletler.map(v=>`<div class="detay-mali-row"><span>${v.aciklama||"Vekalet ücreti"}</span><span>${formatCurrency(v.tutar)}</span></div>`).join("")}<div class="detay-mali-row"><span>TOPLAM</span><span>${formatCurrency(toplamVekalet)}</span></div></div>`:"";
-  const hacizHtml=(hs.length>0||d.hacizler)?`<div class="detay-section detay-haciz"><div class="lbl">🔒 UYGULANAN HACİZLER</div>${hs.length>0?`<div class="detay-haciz-tags">${hs.map(h=>`<span class="detay-haciz-tag">${h}</span>`).join("")}</div>`:""}${d.hacizler?`<div style="font-size:13px;color:#4338ca;margin-top:6px">${d.hacizler}</div>`:""}</div>`:"";
+  const durumMetin=d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç";
+  const kv=(k,v)=>`<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
+  const p1=`<table class="uyap-kv">
+    ${kv("Borçlu",`${d.borclu||"—"}${d.resitDegil?` <span class="resit-badge">⚠️ Reşit Değil</span>`:""}`)}
+    ${kv("Dosya / Esas No",d.dosyaNo?dosyaNoGoster(d.dosyaNo):"—")}
+    ${kv("İcra Dairesi",d.daire||"—")}
+    ${kv("Borç Miktarı",d.borcMiktar?`<span style="color:#e85d4a">${formatCurrency(d.borcMiktar)}</span>`:"—")}
+    ${kv("Takip Tarihi",d.takipTarihi?formatDate(d.takipTarihi):"—")}
+    ${kv("Hatırlatma Tarihi",d.hatirlatmaTarihi?formatDate(d.hatirlatmaTarihi):"—")}
+    ${kv("Dosya Durumu",durumMetin)}
+  </table>`;
+  const p2=`<table class="uyap-kv">
+    ${kv("Tebliğ",d.tebligEdildi?`✅ Edildi ${d.tebligTarihi?`(${formatDate(d.tebligTarihi)})`:""} ${d.tebligSekli==="muhatap"?"· Muhatap":d.tebligSekli==="21/2"?"· 21/2":""}`:"❌ Edilmedi")}
+    ${kv("21/2 Talebi",d.tik212Talep?"⏳ Talep Edildi":"—")}
+    ${kv("Kesinleşme",d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi")}
+    ${kv("Mağdur İadesi",d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurHaricen?` · 💵 Haricen Tahsil (kesintisiz)`:d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}`:"—")}
+  </table>`;
+  const tahsilTablo=(d.tahsilatlar||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.tahsilatlar.map(t=>`<tr><td>${t.aciklama||"Tahsilat"}</td><td>${t.tarih?formatDate(t.tarih):"—"}</td><td style="text-align:right">${formatCurrency(t.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Toplam</span><span style="color:#16a34a">${formatCurrency(toplamTahsilat)}</span></div>`:`<div class="uyap-empty">Tahsilat kaydı yok</div>`;
+  const vekaletTablo=(d.vekaletler||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.vekaletler.map(v=>`<tr><td>${v.aciklama||"Vekalet ücreti"}</td><td>${v.tarih?formatDate(v.tarih):"—"}</td><td style="text-align:right">${formatCurrency(v.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Toplam</span><span style="color:#d4a017">${formatCurrency(toplamVekalet)}</span></div>`:`<div class="uyap-empty">Vekalet ücreti kaydı yok</div>`;
+  const p3=`<div class="lbl" style="margin-bottom:6px">💰 TAHSİLATLAR</div>${tahsilTablo}<div class="lbl" style="margin:18px 0 6px">⚖️ VEKALET ÜCRETLERİ</div>${vekaletTablo}`;
+  const p4=(hs.length||d.hacizler)?`${hs.length?`<table class="uyap-table"><thead><tr><th>Uygulanan Haciz Türleri</th></tr></thead><tbody>${hs.map(h=>`<tr><td>🔒 ${h}</td></tr>`).join("")}</tbody></table>`:""}${d.hacizler?`<div class="lbl" style="margin:14px 0 6px">DİĞER / NOTLAR</div><div style="font-size:13px;color:#4338ca;white-space:pre-wrap">${d.hacizler}</div>`:""}`:`<div class="uyap-empty">Haciz kaydı yok</div>`;
+  const p5=d.notlar?`<div style="font-size:13.5px;color:#334155;white-space:pre-wrap;line-height:1.55">${d.notlar}</div>`:`<div class="uyap-empty">Not yok</div>`;
   document.getElementById("detay-icerik").innerHTML=`
-    <div class="detay-header">
-      <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${d.borclu}${d.resitDegil?` <span class="resit-badge">⚠️ Reşit Değil</span>`:""}</h2>
-        ${d.dosyaNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#6366f1;font-weight:600">${dosyaNoGoster(d.dosyaNo)}</span>`:""}
-        ${d.daire?`<span style="font-size:12px;color:#64748b;margin-left:8px">· ${d.daire}</span>`:""}
+    <div class="uyap-detay">
+      <div class="uyap-head">
+        <div>
+          <div class="u-title">${d.borclu||"—"}${d.resitDegil?` <span class="resit-badge">⚠️ Reşit Değil</span>`:""}</div>
+          <div class="u-sub">${d.dosyaNo?dosyaNoGoster(d.dosyaNo):""}${d.daire?` · ${d.daire}`:""}</div>
+        </div>
+        <button class="btn-close" onclick="document.getElementById('detay-modal').style.display='none'">✕</button>
       </div>
-      <button class="btn-close" onclick="document.getElementById('detay-modal').style.display='none'">✕</button>
-    </div>
-    <div class="detay-grid">
-      ${d.borcMiktar?`<div class="detay-field"><div class="lbl">BORÇ MİKTARI</div><div class="val" style="color:#e85d4a">${formatCurrency(d.borcMiktar)}</div></div>`:""}
-      ${toplamTahsilat>0?`<div class="detay-field"><div class="lbl">TAHSİL EDİLEN</div><div class="val" style="color:#16a34a">${formatCurrency(toplamTahsilat)}</div></div>`:""}
-      ${d.takipTarihi?`<div class="detay-field"><div class="lbl">TAKİP TARİHİ</div><div class="val">${formatDate(d.takipTarihi)}</div></div>`:""}
-    </div>
-    <div class="detay-section detay-tikler">
-      <div class="lbl">DURUM</div>
-      <div class="detay-tik-row"><span>Tebliğ</span><span>${d.tebligEdildi?`✅ Edildi ${d.tebligTarihi?`(${formatDate(d.tebligTarihi)})`:""}  ${d.tebligSekli==="muhatap"?"· Muhatap":d.tebligSekli==="21/2"?"· 21/2":""}` :"❌ Edilmedi"}</span></div>
-      <div class="detay-tik-row"><span>21/2 Talebi</span><span>${d.tik212Talep?"⏳ Talep Edildi":"—"}</span></div>
-      <div class="detay-tik-row"><span>Kesinleşme</span><span>${d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi"}</span></div>
-      <div class="detay-tik-row"><span>Mağdur İadesi</span><span>${d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurHaricen?` · 💵 Haricen Tahsil (kesintisiz)`:d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}` :"—"}</span></div>
-      <div class="detay-tik-row"><span>Dosya Durumu</span><span>${d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç"}</span></div>
-    </div>
-    ${tahsilatHtml}${vekaletHtml}${hacizHtml}
-    ${d.notlar?`<div class="detay-section detay-not"><div class="lbl">NOTLAR</div><div style="font-size:13px;color:#475569">${d.notlar}</div></div>`:""}
-    <div class="detay-actions">
-      <button class="btn-duzenle" onclick="openDuzenle('${d.id}')">✏️ Düzenle</button>
-      <button class="btn-sil2" onclick="openSil('${d.id}')">🗑️ Sil</button>
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Dosya Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Tebliğ & Kesinleşme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Mali (Tahsilat/Vekalet)</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Hacizler</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Kişisel Notlar</button>
+      </div>
+      <div class="uyap-panel active">${p1}</div>
+      <div class="uyap-panel">${p2}</div>
+      <div class="uyap-panel">${p3}</div>
+      <div class="uyap-panel">${p4}</div>
+      <div class="uyap-panel">${p5}</div>
+      <div class="detay-actions">
+        <button class="btn-duzenle" onclick="openDuzenle('${d.id}')">✏️ Düzenle</button>
+        <button class="btn-sil2" onclick="openSil('${d.id}')">🗑️ Sil</button>
+      </div>
     </div>`;
   document.getElementById("detay-modal").style.display="flex";
 }
@@ -1335,31 +1383,49 @@ function openHukukDetay(id){
   const ucret=parseFloat(d.ucret)||0;const kalan=ucret-toplamTahsil;
   const mahkeme=hukukMahkemeMetin(d);
   const olaySirali=[...(d.olaylar||[])].sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+  const kv=(k,v)=>`<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
+  const p1=`<table class="uyap-kv">
+    ${kv("Esas No",d.esasNo||"—")}
+    ${kv("İl",d.il||"—")}
+    ${kv("Mahkeme",mahkeme||"—")}
+    ${kv("Yargı Birimi",d.yargiBirimi||"—")}
+    ${kv("Durum",d.durum==="sonuc"?"✅ Sonuçlandı":"⚖️ Devam Ediyor")}
+  </table>`;
+  const taraflar=[...(d.davacilar||[]).map(n=>({rol:"Davacı",ad:n})),...(d.davalilar||[]).map(n=>({rol:"Davalı",ad:n}))];
+  const p2=taraflar.length?`<table class="uyap-table"><thead><tr><th style="width:120px">Rol</th><th>Adı / Ünvanı</th></tr></thead><tbody>${taraflar.map(t=>`<tr><td><span class="uyap-rol ${t.rol==="Davacı"?"davaci":"davali"}">${t.rol}</span></td><td>${t.ad}</td></tr>`).join("")}</tbody></table>`:`<div class="uyap-empty">Taraf eklenmemiş</div>`;
+  const p3=olaySirali.length?olaySirali.map(o=>`<div class="olay-item"><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join(""):`<div class="uyap-empty">Kronoloji kaydı yok</div>`;
+  const tahsilTablo=(d.tahsilatlar||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.tahsilatlar.map(t=>`<tr><td>${t.aciklama||"Tahsilat"}</td><td>${t.tarih?formatDate(t.tarih):"—"}</td><td style="text-align:right">${formatCurrency(t.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Tahsil Edilen</span><span style="color:#16a34a">${formatCurrency(toplamTahsil)}</span></div>`:`<div class="uyap-empty">Tahsilat kaydı yok</div>`;
+  const p4=`<table class="uyap-kv">
+    ${kv("Anlaşılan Ücret",ucret>0?formatCurrency(ucret):"—")}
+    ${kv("Tahsil Edilen",`<span style="color:#16a34a">${formatCurrency(toplamTahsil)}</span>`)}
+    ${ucret>0?kv("Kalan",`<span style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</span>`):""}
+  </table><div class="lbl" style="margin:16px 0 6px">TAHSİLAT DÖKÜMÜ</div>${tahsilTablo}`;
+  const p5=d.notlar?`<div style="font-size:13.5px;color:#334155;white-space:pre-wrap;line-height:1.55">${d.notlar}</div>`:`<div class="uyap-empty">Not yok</div>`;
   document.getElementById("hukuk-detay-icerik").innerHTML=`
-    <div class="detay-header">
-      <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px">${(d.davacilar||[]).join(", ")||"—"} <span style="color:#94a3b8">/</span> ${(d.davalilar||[]).join(", ")||"—"}</h2>
-        ${d.esasNo?`<span style="font-family:'DM Mono',monospace;font-size:13px;color:#16a34a;font-weight:600">${d.esasNo}</span>`:""}
-        ${mahkeme?`<span style="font-size:12px;color:#64748b;margin-left:8px">· ${mahkeme}</span>`:""}
-        <span class="hukuk-badge" style="margin-left:8px">${d.durum==="sonuc"?"✅ Sonuçlandı":"⚖️ Devam Ediyor"}</span>
+    <div class="uyap-detay hukuk">
+      <div class="uyap-head">
+        <div>
+          <div class="u-title">${(d.davacilar||[]).join(", ")||"—"} <span style="color:#94a3b8">/</span> ${(d.davalilar||[]).join(", ")||"—"} <span class="hukuk-badge">${d.durum==="sonuc"?"✅ Sonuçlandı":"⚖️ Devam Ediyor"}</span></div>
+          <div class="u-sub">${d.esasNo?d.esasNo:""}${mahkeme?` · ${mahkeme}`:""}</div>
+        </div>
+        <button class="btn-close" onclick="document.getElementById('hukuk-detay-modal').style.display='none'">✕</button>
       </div>
-      <button class="btn-close" onclick="document.getElementById('hukuk-detay-modal').style.display='none'">✕</button>
-    </div>
-    <div class="detay-grid">
-      ${ucret>0?`<div class="detay-field"><div class="lbl">ANLAŞILAN ÜCRET</div><div class="val">${formatCurrency(ucret)}</div></div>`:""}
-      ${toplamTahsil>0?`<div class="detay-field"><div class="lbl">TAHSİL EDİLEN</div><div class="val" style="color:#16a34a">${formatCurrency(toplamTahsil)}</div></div>`:""}
-      ${ucret>0?`<div class="detay-field"><div class="lbl">KALAN</div><div class="val" style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</div></div>`:""}
-    </div>
-    <div class="detay-section"><div class="lbl">TARAFLAR</div>
-      <div class="detay-tik-row"><span>Davacı</span><span>${(d.davacilar||[]).join(", ")||"—"}</span></div>
-      <div class="detay-tik-row"><span>Davalı</span><span>${(d.davalilar||[]).join(", ")||"—"}</span></div>
-    </div>
-    ${(d.tahsilatlar||[]).length?`<div class="detay-section detay-mali"><div class="lbl">💰 TAHSİLATLAR</div>${d.tahsilatlar.map(t=>`<div class="detay-mali-row"><span>${t.aciklama||"Tahsilat"}${t.tarih?` · ${formatDate(t.tarih)}`:""}</span><span>${formatCurrency(t.tutar)}</span></div>`).join("")}<div class="detay-mali-row"><span>TOPLAM</span><span>${formatCurrency(toplamTahsil)}</span></div></div>`:""}
-    ${olaySirali.length?`<div class="detay-section"><div class="lbl">🕒 KRONOLOJİ</div>${olaySirali.map(o=>`<div class="olay-item"><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join("")}</div>`:""}
-    ${d.notlar?`<div class="detay-section detay-not"><div class="lbl">📝 NOTLAR</div><div style="font-size:13px;color:#475569;white-space:pre-wrap;line-height:1.5">${d.notlar}</div></div>`:""}
-    <div class="detay-actions">
-      <button class="btn-duzenle" onclick="openHukukDuzenle('${d.id}')">✏️ Düzenle</button>
-      <button class="btn-sil2" onclick="openHukukSil('${d.id}')">🗑️ Sil</button>
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Dosya Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Taraf Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Safahat / Kronoloji</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Ödeme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Kişisel Notlar</button>
+      </div>
+      <div class="uyap-panel active">${p1}</div>
+      <div class="uyap-panel">${p2}</div>
+      <div class="uyap-panel">${p3}</div>
+      <div class="uyap-panel">${p4}</div>
+      <div class="uyap-panel">${p5}</div>
+      <div class="detay-actions">
+        <button class="btn-duzenle" onclick="openHukukDuzenle('${d.id}')">✏️ Düzenle</button>
+        <button class="btn-sil2" onclick="openHukukSil('${d.id}')">🗑️ Sil</button>
+      </div>
     </div>`;
   document.getElementById("hukuk-detay-modal").style.display="flex";
 }
