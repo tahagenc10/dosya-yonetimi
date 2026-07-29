@@ -67,8 +67,9 @@
     .modal-body h2{font-size:17px;font-weight:700;color:#1e293b;margin-bottom:20px;}
     .form-section{margin-bottom:20px;}
     .form-section-title{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.08em;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #f1f5f9;}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
     .col-span-2{grid-column:1/-1;}
+    .col-span-1of3{grid-column:span 1;}
     .field{display:flex;flex-direction:column;gap:4px;}
     .field>label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;}
     .field input,.field textarea,.field select{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:14px;outline:none;background:#fafafa;}
@@ -202,6 +203,7 @@
     .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:999;animation:slideIn 0.3s ease;}
     @keyframes slideIn{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
     @media(max-width:760px){.dosya-list{grid-template-columns:1fr;}}
+    @media(max-width:900px){.form-grid{grid-template-columns:1fr 1fr;}}
     @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.col-span-2{grid-column:1;}.detay-grid{grid-template-columns:1fr;}.header{padding:16px;}.main{padding:16px;}}
     /* İstatistik */
     .ist-title{font-size:19px;font-weight:800;color:#1e293b;margin-bottom:4px;}
@@ -232,7 +234,7 @@
     .ist-empty{text-align:center;color:#94a3b8;padding:24px;font-size:13px;}
     @media(max-width:600px){.ist-kpi-grid{grid-template-columns:1fr;}}
     /* UYAP tarzı sekmeli detay */
-    .modal.wide{max-width:960px;}
+    .modal.wide{max-width:1140px;}
     .uyap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #eef2f7;}
     .uyap-head .u-title{font-size:16px;font-weight:800;color:#1e293b;line-height:1.35;}
     .uyap-head .u-sub{font-size:12.5px;color:#64748b;margin-top:3px;font-family:'DM Mono',monospace;}
