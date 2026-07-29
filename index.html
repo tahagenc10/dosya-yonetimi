@@ -352,9 +352,19 @@
 
 <!-- Form Modal -->
 <div class="overlay" id="form-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-body">
       <h2 id="form-title">Yeni İcra Dosyası</h2>
+      <div class="uyap-detay">
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Dosya Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Tebliğ</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Kesinleşme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Mali</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Hacizler</button>
+        <button class="uyap-tab" onclick="uyapTab(this,5)">Notlar</button>
+      </div>
+      <div class="uyap-panel active">
       <div class="form-section">
         <div class="form-section-title">TEMEL BİLGİLER</div>
         <div class="form-grid">
@@ -394,6 +404,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">TEBLİĞ BİLGİLERİ</div>
         <div class="tik-group">
@@ -412,6 +424,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">KESİNLEŞME</div>
         <div class="tik-group">
@@ -425,6 +439,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">MALİ BİLGİLER</div>
         <div style="margin-bottom:12px">
@@ -472,6 +488,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">UYGULANAN HACİZLER</div>
         <div class="haciz-accordion">
@@ -489,9 +507,13 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">NOTLAR</div>
         <div class="field"><textarea id="f-notlar" rows="3" placeholder="Serbest not..."></textarea></div>
+      </div>
+      </div>
       </div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="document.getElementById('form-modal').style.display='none'">İptal</button>
@@ -532,9 +554,18 @@
 
 <!-- Hukuk Davası Form Modal -->
 <div class="overlay" id="hukuk-form-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-body">
       <h2 id="h-form-title">Yeni Hukuk Davası</h2>
+      <div class="uyap-detay hukuk">
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Dosya Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Taraf Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Ödeme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Safahat / Kronoloji</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Kişisel Notlar</button>
+      </div>
+      <div class="uyap-panel active">
       <div class="form-section">
         <div class="form-section-title">MAHKEME BİLGİLERİ</div>
         <div class="form-grid">
@@ -566,6 +597,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">TARAFLAR</div>
         <div style="margin-bottom:12px">
@@ -585,6 +618,8 @@
           </div>
         </div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">ÜCRET & TAHSİLAT</div>
         <div class="field" style="margin-bottom:12px"><label>MÜVEKKİL İLE ANLAŞILAN ÜCRET (TL)</label><input id="h-ucret" type="number" placeholder="0.00" oninput="hukukTahsilOzet()" /></div>
@@ -598,6 +633,8 @@
         </div>
         <div id="h-tahsil-ozet" style="font-size:13px;font-weight:700;text-align:right;margin-top:8px;color:#16a34a"></div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">KRONOLOJİ (OLAYLAR / GÜNCELLEMELER)</div>
         <div class="olay-ekle">
@@ -607,9 +644,13 @@
         </div>
         <div id="h-olay-list"></div>
       </div>
+      </div>
+      <div class="uyap-panel">
       <div class="form-section">
         <div class="form-section-title">KİŞİSEL NOTLAR</div>
         <div class="field"><textarea id="h-notlar" rows="3" placeholder="Bu dosyaya özel serbest notların..."></textarea></div>
+      </div>
+      </div>
       </div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="document.getElementById('hukuk-form-modal').style.display='none'">İptal</button>
@@ -1005,7 +1046,7 @@ function resetForm(){
   document.getElementById("haciz-arrow").style.transform="rotate(0deg)";
 }
 
-function openYeni(){editId=null;document.getElementById("form-title").textContent="Yeni İcra Dosyası";resetForm();document.getElementById("form-modal").style.display="flex";}
+function openYeni(){editId=null;document.getElementById("form-title").textContent="Yeni İcra Dosyası";resetForm();uyapFormReset("form-modal");document.getElementById("form-modal").style.display="flex";}
 
 function openDuzenle(id){
   const d=dosyalar.find(x=>x.id===id);if(!d)return;
@@ -1046,6 +1087,7 @@ function openDuzenle(id){
   const varHaciz=(d.hacizSecili||[]).length>0;panelAcik=varHaciz;
   document.getElementById("haciz-panel").style.display=varHaciz?"flex":"none";
   document.getElementById("haciz-arrow").style.transform=varHaciz?"rotate(180deg)":"rotate(0deg)";
+  uyapFormReset("form-modal");
   document.getElementById("form-modal").style.display="flex";
   document.getElementById("detay-modal").style.display="none";
 }
@@ -1087,6 +1129,11 @@ function uyapTab(btn,idx){
   const wrap=btn.closest(".uyap-detay");
   wrap.querySelectorAll(".uyap-tab").forEach((t,i)=>t.classList.toggle("active",i===idx));
   wrap.querySelectorAll(".uyap-panel").forEach((p,i)=>p.classList.toggle("active",i===idx));
+}
+function uyapFormReset(modalId){
+  const w=document.getElementById(modalId)?.querySelector(".uyap-detay");if(!w)return;
+  w.querySelectorAll(".uyap-tab").forEach((t,i)=>t.classList.toggle("active",i===0));
+  w.querySelectorAll(".uyap-panel").forEach((p,i)=>p.classList.toggle("active",i===0));
 }
 function openDetay(id){
   const d=dosyalar.find(x=>x.id===id);if(!d)return;
@@ -1336,7 +1383,7 @@ function hukukResetForm(){
   hDavacilar=[];hDavalilar=[];hTahsilatlar=[];hOlaylar=[];
   renderTaraflar();renderHukukTahsil();renderOlaylar();
 }
-function openYeniHukuk(){hukukEditId=null;document.getElementById("h-form-title").textContent="Yeni Hukuk Davası";hukukResetForm();document.getElementById("hukuk-form-modal").style.display="flex";}
+function openYeniHukuk(){hukukEditId=null;document.getElementById("h-form-title").textContent="Yeni Hukuk Davası";hukukResetForm();uyapFormReset("hukuk-form-modal");document.getElementById("hukuk-form-modal").style.display="flex";}
 function openHukukDuzenle(id){
   const d=hukukDavalar.find(x=>x.id===id);if(!d)return;
   hukukEditId=id;document.getElementById("h-form-title").textContent="Davayı Düzenle";
@@ -1350,6 +1397,7 @@ function openHukukDuzenle(id){
   document.getElementById("h-notlar").value=d.notlar||"";
   hDavacilar=[...(d.davacilar||[])];hDavalilar=[...(d.davalilar||[])];hTahsilatlar=[...(d.tahsilatlar||[])];hOlaylar=[...(d.olaylar||[])];
   renderTaraflar();renderHukukTahsil();renderOlaylar();
+  uyapFormReset("hukuk-form-modal");
   document.getElementById("hukuk-form-modal").style.display="flex";
   document.getElementById("hukuk-detay-modal").style.display="none";
 }
