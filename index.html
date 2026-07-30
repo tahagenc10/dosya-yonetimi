@@ -29,6 +29,7 @@
     .tabs{display:flex;gap:4px;margin-bottom:20px;background:#e2e8f0;padding:4px;border-radius:12px;flex-wrap:wrap;}
     .tab{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;background:transparent;color:#64748b;transition:all 0.15s;text-align:center;min-width:80px;}
     .tab.active{background:#fff;color:#1e293b;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+    .tab-tumu.active{color:#334155;}
     .tab-baslangic.active{color:#e85d4a;}
     .tab-bekleyen.active{color:#f59e0b;}
     .tab-kismi.active{color:#06b6d4;}
@@ -342,7 +343,8 @@
     <div id="hatirlatmalar"></div>
     <input class="search-input" id="arama" placeholder="🔍  Borçlu adı veya dosya no ara (tüm kategorilerde)..." oninput="render()" />
     <div class="tabs">
-      <button class="tab tab-baslangic active" onclick="setTab('baslangic')">📂 Başlangıç <span id="cnt-baslangic"></span></button>
+      <button class="tab tab-tumu active" onclick="setTab('tumu')">📁 Tüm Dosyalar <span id="cnt-tumu"></span></button>
+      <button class="tab tab-baslangic" onclick="setTab('baslangic')">📂 Başlangıç <span id="cnt-baslangic"></span></button>
       <button class="tab tab-bekleyen" onclick="setTab('bekleyen')">⏳ Bekleyen <span id="cnt-bekleyen"></span></button>
       <button class="tab tab-kismi" onclick="setTab('kismi')">💵 Kısmi Ödeme <span id="cnt-kismi"></span></button>
       <button class="tab tab-kesinlesmis" onclick="setTab('kesinlesmis')">🔒 Kesinleşmiş <span id="cnt-kesinlesmis"></span></button>
@@ -829,7 +831,7 @@ function uygulamayaGir(){
   yukle();
 }
 const HACIZ_TIPLERI=[{id:"h-maas",label:"Maaş Haczi"},{id:"h-banka",label:"Banka Haczi"},{id:"h-arac",label:"Araç Haczi"},{id:"h-tapu",label:"Tapu / Gayrimenkul Haczi"}];
-let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
+let dosyalar=[],aktifTab="tumu",editId=null,silId=null,panelAcik=false;
 let muvekkiller=[],aktifMuvekkil=null;
 let aktifModul="icra";
 let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
@@ -918,6 +920,7 @@ function render(){
     const el=document.getElementById("cnt-"+b);
     if(el)el.textContent=`(${veri.filter(d=>d.bolum===b).length})`;
   });
+  {const ct=document.getElementById("cnt-tumu");if(ct)ct.textContent=`(${veri.length})`;}
   const toplam=veri.reduce((s,d)=>s+(parseFloat(d.borcMiktar)||0),0);
   const toplamTahsil=veri.reduce((s,d)=>s+(d.tahsilatlar||[]).reduce((a,t)=>a+(parseFloat(t.tutar)||0),0),0);
   document.getElementById("header-stats").textContent=`${veri.length} dosya · Toplam: ${formatCurrency(toplam)} · Tahsil: ${formatCurrency(toplamTahsil)}`;
@@ -925,7 +928,7 @@ function render(){
   document.getElementById("hatirlatmalar").innerHTML=hat.length>0?`<div class="hatirlatma-box"><strong>🔔 Bugün veya geçmiş hatırlatmalar:</strong><div class="hatirlatma-items">${hat.map(d=>`<span class="hatirlatma-item" onclick="openDetay('${d.id}')">${d.borclu} — ${formatDate(d.hatirlatmaTarihi)}</span>`).join("")}</div></div>`:"";
   const filtered=veri.filter(d=>{
     const eslesme=!metin||d.borclu?.toLowerCase().includes(metin)||d.dosyaNo?.toLowerCase().includes(metin);
-    return metin?eslesme:(eslesme&&d.bolum===aktifTab);
+    return metin?eslesme:(eslesme&&(aktifTab==="tumu"||d.bolum===aktifTab));
   });
   const listeEl=document.getElementById("liste");
   if(filtered.length===0){listeEl.innerHTML=`<div class="empty-state"><div style="font-size:36px;margin-bottom:10px">📂</div><strong style="color:#64748b;display:block">Dosya bulunamadı</strong></div>`;return;}
