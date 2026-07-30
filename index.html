@@ -405,6 +405,14 @@
               </div>
             </div>
           </div>
+          <div class="field col-span-2" id="ebeveyn-alan" style="display:none">
+            <label>👪 EBEVEYN BİLGİLERİ</label>
+            <div id="ebeveyn-list"></div>
+            <div class="olay-ekle">
+              <input id="f-ebeveyn" placeholder="Ebeveyn ad soyad" style="flex:1;min-width:160px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();ebeveynEkle()}" />
+              <button type="button" class="btn-vekalet-ekle" onclick="ebeveynEkle()">+ Ekle</button>
+            </div>
+          </div>
           <div class="field"><label>İCRA DAİRESİ</label><select id="f-daire" onchange="formBaslikGuncelle()"><option value="">Seçiniz...</option><option>Sakarya 1. İcra Dairesi</option><option>Sakarya 2. İcra Dairesi</option><option>Sakarya 3. İcra Dairesi</option><option>Sakarya 4. İcra Dairesi</option></select></div>
           <div class="field"><label>BORÇ MİKTARI (TL)</label><input id="f-borcMiktar" type="number" placeholder="0.00" /></div>
           <div class="field col-span-2"><label>DOSYA / ESAS NO</label><div class="dosyano-input"><select id="f-dosyaYil" class="dosyano-yil" onchange="formBaslikGuncelle()"><option value="2026">2026/</option><option value="2025">2025/</option></select><input id="f-dosyaNo" placeholder="1234" oninput="formBaslikGuncelle()" /></div></div>
@@ -845,7 +853,10 @@ let aktifModul="icra";
 let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
 let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[],hEvraklar=[];
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
-let vekaletler=[],tahsilatlar=[],magdurIadeler=[];
+let vekaletler=[],tahsilatlar=[],magdurIadeler=[],ebeveynler=[];
+function ebeveynEkle(){const inp=document.getElementById("f-ebeveyn");const v=inp.value.trim();if(!v)return;ebeveynler.push(v);inp.value="";renderEbeveyn();inp.focus();}
+function ebeveynSil(i){ebeveynler.splice(i,1);renderEbeveyn();}
+function renderEbeveyn(){const el=document.getElementById("ebeveyn-list");if(!el)return;el.innerHTML=ebeveynler.map((n,i)=>`<span class="taraf-chip"><b>${n}</b><span class="tc-spacer"></span><button type="button" onclick="ebeveynSil(${i})">✕</button></span>`).join("");}
 function normMagdurIade(json,eskiKesinti,eskiTarih){
   let arr=[];try{arr=json?JSON.parse(json):[];}catch(e){arr=[];}
   if((!arr||!arr.length)&&eskiKesinti){arr=[{tutar:parseFloat(eskiKesinti)||0,tarih:eskiTarih||"",aciklama:""}];}
@@ -921,7 +932,7 @@ async function yukle(){
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
     magdurIade:d.magdur_iade||false,magdurHaricen:d.magdur_haricen||false,magdurIadeler:normMagdurIade(d.magdur_iadeler,d.magdur_kesinti,d.magdur_tarihi),
-    resitDegil:d.resit_degil||false,
+    resitDegil:d.resit_degil||false,ebeveynler:d.ebeveynler?JSON.parse(d.ebeveynler):[],
     tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     vekaletler:d.vekaletler?JSON.parse(d.vekaletler):[],
     hacizSecili:d.haciz_secili?JSON.parse(d.haciz_secili):[],
@@ -994,7 +1005,7 @@ function render(){
 function toggleTik(tip){
   if(tip==="teblig"){tikTeblig=!tikTeblig;document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");document.getElementById("teblig-detay").style.display=tikTeblig?"block":"none";}
   if(tip==="212talep"){tik212Talep=!tik212Talep;document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");}
-  if(tip==="resit"){tikResit=!tikResit;document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");}
+  if(tip==="resit"){tikResit=!tikResit;document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");document.getElementById("ebeveyn-alan").style.display=tikResit?"":"none";}
   if(tip==="magdur"){
     tikMagdur=!tikMagdur;
     document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
@@ -1088,7 +1099,8 @@ function resetForm(){
   magdurIadeler=[];
   document.getElementById("f-magdur-tarih").value=bugun();
   setSeciliHacizler([]);
-  tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;tikHaricen=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
+  tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;tikHaricen=false;kesinDurum="";vekaletler=[];tahsilatlar=[];ebeveynler=[];
+  document.getElementById("ebeveyn-alan").style.display="none";renderEbeveyn();
   document.getElementById("tik-haricen").className="magdur-toggle";
   document.getElementById("magdur-iade-alan").style.display="";
   renderMagdurIade();
@@ -1139,6 +1151,7 @@ function openDuzenle(id){
   document.getElementById("tik-haricen").className="magdur-toggle"+(tikHaricen?" on":"");
   document.getElementById("magdur-iade-alan").style.display=tikHaricen?"none":"";
   document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");
+  ebeveynler=[...(d.ebeveynler||[])];renderEbeveyn();document.getElementById("ebeveyn-alan").style.display=tikResit?"":"none";
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
   document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");
   document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
@@ -1170,7 +1183,7 @@ async function kaydet(){
     teblig_edildi:tikTeblig,tik_212_talep:tik212Talep,
     teblig_tarihi:tikTeblig?(document.getElementById("f-tebligTarihi").value||null):null,
     teblig_sekli:tikTeblig?(document.getElementById("f-tebligSekli").value||null):null,
-    kesin_durum:kesinDurum,magdur_iade:tikMagdur,resit_degil:tikResit,
+    kesin_durum:kesinDurum,magdur_iade:tikMagdur,resit_degil:tikResit,ebeveynler:tikResit?JSON.stringify(ebeveynler):"[]",
     magdur_kesinti:null,magdur_tarihi:null,
     magdur_iadeler:(tikMagdur&&!tikHaricen)?JSON.stringify(magdurIadeler):"[]",
     magdur_haricen:tikMagdur?tikHaricen:false,
@@ -1230,6 +1243,7 @@ function openDetay(id){
   const kv=(k,v)=>`<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
   const p1=`<table class="uyap-kv">
     ${kv("Borçlu",`${d.borclu||"—"}${d.resitDegil?` <span class="resit-badge">⚠️ Reşit Değil</span>`:""}`)}
+    ${d.resitDegil&&(d.ebeveynler||[]).length?kv("👪 Ebeveyn(ler)",(d.ebeveynler||[]).join(", ")):""}
     ${kv("Dosya / Esas No",d.dosyaNo?dosyaNoGoster(d.dosyaNo):"—")}
     ${kv("İcra Dairesi",d.daire||"—")}
     ${kv("Borç Miktarı",d.borcMiktar?`<span style="color:#e85d4a">${formatCurrency(d.borcMiktar)}</span>`:"—")}
