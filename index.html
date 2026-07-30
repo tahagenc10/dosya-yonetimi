@@ -474,7 +474,7 @@
           <div class="magdur-card" id="magdur-card">
             <div class="magdur-head">
               <div>
-                <div class="tik-row-label">💜 Mağdur İadesi</div>
+                <div class="tik-row-label">Mağdur İadesi</div>
                 <div class="tik-row-sub">Tahsilattan mağdura iade yapıldı mı?</div>
               </div>
               <button type="button" class="magdur-toggle" id="tik-magdur" onclick="toggleTik('magdur')">İade Yapıldı</button>
@@ -487,9 +487,15 @@
                 </div>
                 <button type="button" class="magdur-toggle" id="tik-haricen" onclick="toggleTik('haricen')">Haricen Tahsil</button>
               </div>
-              <div class="magdur-fields">
-                <div class="field"><label>İADE TARİHİ</label><input id="f-magdurTarihi" type="date" /></div>
-                <div class="field" id="magdur-kesinti-field"><label>KESİNTİ MİKTARI (TL)</label><input id="f-magdurKesinti" type="number" placeholder="0.00" /></div>
+              <div id="magdur-iade-alan" style="margin-top:14px">
+                <label style="font-size:11px;font-weight:600;color:#7c3aed;letter-spacing:0.05em;display:block;margin-bottom:8px">İADE / KESİNTİ TUTARLARI</label>
+                <div class="vekalet-list" id="magdur-iade-list"></div>
+                <div class="olay-ekle">
+                  <input id="f-magdur-tutar" type="number" placeholder="Tutar (TL)" style="border:1.5px solid #e6dbfa;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa;width:120px" onkeydown="if(event.key==='Enter'){event.preventDefault();magdurIadeEkle()}" />
+                  <input id="f-magdur-tarih" type="date" style="border:1.5px solid #e6dbfa;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa" />
+                  <input id="f-magdur-aciklama" placeholder="Açıklama (opsiyonel)" style="flex:1;min-width:120px;border:1.5px solid #e6dbfa;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" />
+                  <button type="button" class="btn-vekalet-ekle" onclick="magdurIadeEkle()">+ Ekle</button>
+                </div>
               </div>
             </div>
           </div>
@@ -837,7 +843,25 @@ let aktifModul="icra";
 let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
 let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[],hEvraklar=[];
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
-let vekaletler=[],tahsilatlar=[];
+let vekaletler=[],tahsilatlar=[],magdurIadeler=[];
+function normMagdurIade(json,eskiKesinti,eskiTarih){
+  let arr=[];try{arr=json?JSON.parse(json):[];}catch(e){arr=[];}
+  if((!arr||!arr.length)&&eskiKesinti){arr=[{tutar:parseFloat(eskiKesinti)||0,tarih:eskiTarih||"",aciklama:""}];}
+  return (arr||[]).map(x=>({tutar:parseFloat(x.tutar)||0,tarih:x.tarih||"",aciklama:x.aciklama||""}));
+}
+function magdurIadeEkle(){
+  const t=document.getElementById("f-magdur-tutar").value;const tar=document.getElementById("f-magdur-tarih").value;const a=document.getElementById("f-magdur-aciklama").value;
+  if(!t)return;
+  magdurIadeler.push({tutar:parseFloat(t),tarih:tar||bugun(),aciklama:a});
+  document.getElementById("f-magdur-tutar").value="";document.getElementById("f-magdur-aciklama").value="";document.getElementById("f-magdur-tarih").value=bugun();
+  renderMagdurIade();
+}
+function magdurIadeSil(i){magdurIadeler.splice(i,1);renderMagdurIade();}
+function renderMagdurIade(){
+  const el=document.getElementById("magdur-iade-list");if(!el)return;
+  const top=magdurIadeler.reduce((s,x)=>s+(x.tutar||0),0);
+  el.innerHTML=magdurIadeler.map((x,i)=>`<div class="vekalet-item"><span>${x.aciklama||"İade / kesinti"}${x.tarih?` <small style="color:#94a3b8">${formatDate(x.tarih)}</small>`:""}</span><small>${formatCurrency(x.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="magdurIadeSil(${i})">✕</button></div>`).join("")+(magdurIadeler.length?`<div style="text-align:right;font-size:12px;color:#9333ea;font-weight:700;padding:4px 2px">Toplam: ${formatCurrency(top)}</div>`:"");
+}
 
 function toast(msg){const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3000);}
 function formatCurrency(v){const n=parseFloat(v);if(!v||isNaN(n))return"-";return n.toLocaleString("tr-TR",{style:"currency",currency:"TRY"});}
@@ -894,7 +918,7 @@ async function yukle(){
     takipTarihi:d.takip_tarihi,hatirlatmaTarihi:d.hatirlatma_tarihi,bolum:d.bolum||"baslangic",
     tebligEdildi:d.teblig_edildi||false,tebligTarihi:d.teblig_tarihi,tebligSekli:d.teblig_sekli,
     tik212Talep:d.tik_212_talep||false,kesinDurum:d.kesin_durum||"",
-    magdurIade:d.magdur_iade||false,magdurKesinti:d.magdur_kesinti,magdurTarihi:d.magdur_tarihi,magdurHaricen:d.magdur_haricen||false,
+    magdurIade:d.magdur_iade||false,magdurHaricen:d.magdur_haricen||false,magdurIadeler:normMagdurIade(d.magdur_iadeler,d.magdur_kesinti,d.magdur_tarihi),
     resitDegil:d.resit_degil||false,
     tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     vekaletler:d.vekaletler?JSON.parse(d.vekaletler):[],
@@ -941,7 +965,8 @@ function render(){
     if(d.tik212Talep)tikler.push(`<span class="tik" style="background:#eff6ff;color:#1d4ed8">⏳ 21/2 Talep</span>`);
     if(d.kesinDurum==="talep")tikler.push(`<span class="tik" style="background:#eff6ff;color:#1d4ed8">⏳ Kesinleşme Talep</span>`);
     if(d.kesinDurum==="kesin")tikler.push(`<span class="tik on">✓ Kesinleşti</span>`);
-    if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurHaricen?` (Haricen Tahsil)`:d.magdurKesinti?` (${formatCurrency(d.magdurKesinti)} kesinti)`:""}</span>`);
+    const iadeTop=(d.magdurIadeler||[]).reduce((s,x)=>s+(parseFloat(x.tutar)||0),0);
+    if(d.magdurIade)tikler.push(`<span class="tik" style="background:#fdf4ff;color:#9333ea">✓ Mağdur İadesi${d.magdurHaricen?` (Haricen Tahsil)`:iadeTop?` (${formatCurrency(iadeTop)} kesinti)`:""}</span>`);
     if(d.magdurHaricen)tikler.push(`<span class="tik" style="background:#ecfeff;color:#0891b2">💵 Haricen Tahsil</span>`);
     return`<div class="dosya-card ${d.bolum}" onclick="openDetay('${d.id}')">
       <div>
@@ -973,13 +998,12 @@ function toggleTik(tip){
     document.getElementById("tik-magdur").className="magdur-toggle"+(tikMagdur?" on":"");
     document.getElementById("magdur-card").className="magdur-card"+(tikMagdur?" on":"");
     document.getElementById("magdur-detay").style.display=tikMagdur?"block":"none";
-    if(tikMagdur){const dt=document.getElementById("f-magdurTarihi");if(!dt.value)dt.value=bugun();}
+    if(tikMagdur){const dt=document.getElementById("f-magdur-tarih");if(dt&&!dt.value)dt.value=bugun();}
   }
   if(tip==="haricen"){
     tikHaricen=!tikHaricen;
     document.getElementById("tik-haricen").className="magdur-toggle"+(tikHaricen?" on":"");
-    document.getElementById("magdur-kesinti-field").style.display=tikHaricen?"none":"";
-    if(tikHaricen)document.getElementById("f-magdurKesinti").value="";
+    document.getElementById("magdur-iade-alan").style.display=tikHaricen?"none":"";
   }
 }
 function hizliReset(){
@@ -1059,12 +1083,13 @@ function resetForm(){
   hizliReset();
   setBolum("baslangic");
   document.getElementById("f-tebligSekli").value="";
-  if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value="";
-  if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value="";
+  magdurIadeler=[];
+  document.getElementById("f-magdur-tarih").value=bugun();
   setSeciliHacizler([]);
   tikTeblig=false;tik212Talep=false;tikMagdur=false;tikResit=false;tikHaricen=false;kesinDurum="";vekaletler=[];tahsilatlar=[];
   document.getElementById("tik-haricen").className="magdur-toggle";
-  document.getElementById("magdur-kesinti-field").style.display="";
+  document.getElementById("magdur-iade-alan").style.display="";
+  renderMagdurIade();
   document.getElementById("tik-resit").className="tik-btn";
   document.getElementById("tik-teblig").className="tik-btn";
   document.getElementById("tik-212talep").className="tik-btn";
@@ -1100,8 +1125,9 @@ function openDuzenle(id){
   document.getElementById("f-tebligTarihi").value=d.tebligTarihi||"";
   document.getElementById("f-tebligSekli").value=d.tebligSekli||"";
   document.getElementById("f-hacizler").value=d.hacizler||"";
-  if(document.getElementById("f-magdurKesinti"))document.getElementById("f-magdurKesinti").value=d.magdurKesinti||"";
-  if(document.getElementById("f-magdurTarihi"))document.getElementById("f-magdurTarihi").value=d.magdurTarihi||"";
+  magdurIadeler=[...(d.magdurIadeler||[])];
+  document.getElementById("f-magdur-tarih").value=bugun();
+  renderMagdurIade();
   setSeciliHacizler(d.hacizSecili||[]);
   vekaletler=[...(d.vekaletler||[])];tahsilatlar=[...(d.tahsilatlar||[])];
   document.getElementById("tahsil-tarih").value=bugun();
@@ -1109,7 +1135,7 @@ function openDuzenle(id){
   renderVekaletList();renderTahsilList();
   tikTeblig=d.tebligEdildi||false;tik212Talep=d.tik212Talep||false;tikMagdur=d.magdurIade||false;tikResit=d.resitDegil||false;tikHaricen=d.magdurHaricen||false;kesinDurum=d.kesinDurum||"";
   document.getElementById("tik-haricen").className="magdur-toggle"+(tikHaricen?" on":"");
-  document.getElementById("magdur-kesinti-field").style.display=tikHaricen?"none":"";
+  document.getElementById("magdur-iade-alan").style.display=tikHaricen?"none":"";
   document.getElementById("tik-resit").className="tik-btn"+(tikResit?" active-red":"");
   document.getElementById("tik-teblig").className="tik-btn"+(tikTeblig?" active-green":"");
   document.getElementById("tik-212talep").className="tik-btn"+(tik212Talep?" active-blue":"");
@@ -1143,8 +1169,8 @@ async function kaydet(){
     teblig_tarihi:tikTeblig?(document.getElementById("f-tebligTarihi").value||null):null,
     teblig_sekli:tikTeblig?(document.getElementById("f-tebligSekli").value||null):null,
     kesin_durum:kesinDurum,magdur_iade:tikMagdur,resit_degil:tikResit,
-    magdur_kesinti:(tikMagdur&&!tikHaricen)?(document.getElementById("f-magdurKesinti").value||null):null,
-    magdur_tarihi:tikMagdur?(document.getElementById("f-magdurTarihi").value||null):null,
+    magdur_kesinti:null,magdur_tarihi:null,
+    magdur_iadeler:(tikMagdur&&!tikHaricen)?JSON.stringify(magdurIadeler):"[]",
     magdur_haricen:tikMagdur?tikHaricen:false,
     tahsilatlar:JSON.stringify(tahsilatlar),vekaletler:JSON.stringify(vekaletler),
     haciz_secili:JSON.stringify(getSeciliHacizler()),
@@ -1197,6 +1223,7 @@ function openDetay(id){
   const hs=d.hacizSecili||[];
   const toplamVekalet=(d.vekaletler||[]).reduce((s,v)=>s+(parseFloat(v.tutar)||0),0);
   const toplamTahsilat=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
+  const iadeTop=(d.magdurIadeler||[]).reduce((s,x)=>s+(parseFloat(x.tutar)||0),0);
   const durumMetin=d.bolum==="kapali"?"✅ Kapalı":d.bolum==="batik"?"💀 Batık":d.bolum==="kesinlesmis"?"🔒 Kesinleşmiş":d.bolum==="bekleyen"?"⏳ Bekleyen":d.bolum==="kismi"?"💵 Kısmi Ödeme":"📂 Başlangıç";
   const kv=(k,v)=>`<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
   const p1=`<table class="uyap-kv">
@@ -1212,7 +1239,7 @@ function openDetay(id){
     ${kv("Tebliğ",d.tebligEdildi?`✅ Edildi ${d.tebligTarihi?`(${formatDate(d.tebligTarihi)})`:""} ${d.tebligSekli==="muhatap"?"· Muhatap":d.tebligSekli==="21/2"?"· 21/2":""}`:"❌ Edilmedi")}
     ${kv("21/2 Talebi",d.tik212Talep?"⏳ Talep Edildi":"—")}
     ${kv("Kesinleşme",d.kesinDurum==="kesin"?"✅ Kesinleşti":d.kesinDurum==="talep"?"⏳ Talep Edildi":"❌ Talep Edilmedi")}
-    ${kv("Mağdur İadesi",d.magdurIade?`✅ Yapıldı${d.magdurTarihi?` · ${formatDate(d.magdurTarihi)}`:""}${d.magdurHaricen?` · 💵 Haricen Tahsil (kesintisiz)`:d.magdurKesinti?` · ${formatCurrency(d.magdurKesinti)} kesinti`:""}`:"—")}
+    ${kv("Mağdur İadesi",d.magdurIade?`✅ Yapıldı${d.magdurHaricen?` · 💵 Haricen Tahsil (kesintisiz)`:iadeTop?` · ${formatCurrency(iadeTop)} kesinti`:""}`:"—")}
   </table>`;
   const tahsilTablo=(d.tahsilatlar||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.tahsilatlar.map(t=>`<tr><td>${t.aciklama||"Tahsilat"}</td><td>${t.tarih?formatDate(t.tarih):"—"}</td><td style="text-align:right">${formatCurrency(t.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Toplam</span><span style="color:#16a34a">${formatCurrency(toplamTahsilat)}</span></div>`:`<div class="uyap-empty">Tahsilat kaydı yok</div>`;
   const vekaletTablo=(d.vekaletler||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.vekaletler.map(v=>`<tr><td>${v.aciklama||"Vekalet ücreti"}</td><td>${v.tarih?formatDate(v.tarih):"—"}</td><td style="text-align:right">${formatCurrency(v.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Toplam</span><span style="color:#d4a017">${formatCurrency(toplamVekalet)}</span></div>`:`<div class="uyap-empty">Vekalet ücreti kaydı yok</div>`;
