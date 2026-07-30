@@ -578,7 +578,8 @@
         <button class="uyap-tab" onclick="uyapTab(this,1)">Taraf Bilgileri</button>
         <button class="uyap-tab" onclick="uyapTab(this,2)">Ödeme</button>
         <button class="uyap-tab" onclick="uyapTab(this,3)">Safahat / Kronoloji</button>
-        <button class="uyap-tab" onclick="uyapTab(this,4)">Kişisel Notlar</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Evrak</button>
+        <button class="uyap-tab" onclick="uyapTab(this,5)">Kişisel Notlar</button>
       </div>
       <div class="uyap-panel active">
       <div class="form-section">
@@ -662,6 +663,17 @@
           <button type="button" class="btn-vekalet-ekle" onclick="olayEkle()" style="align-self:flex-start">+ Ekle</button>
         </div>
         <div id="h-olay-list"></div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">EVRAKLAR</div>
+        <div id="h-evrak-list"></div>
+        <div class="olay-ekle">
+          <input type="file" id="h-evrak-file" accept=".pdf,.docx,.udf" style="font-size:13px;flex:1;min-width:180px" />
+          <button type="button" class="btn-vekalet-ekle" onclick="evrakYukleBtn()">⬆️ Yükle</button>
+        </div>
+        <div id="h-evrak-durum" style="font-size:12px;color:#94a3b8;margin-top:8px">PDF, DOCX veya UDF dosyası yükleyebilirsin. Yüklenen evrak anında kaydedilir.</div>
       </div>
       </div>
       <div class="uyap-panel">
@@ -818,7 +830,7 @@ let dosyalar=[],aktifTab="baslangic",editId=null,silId=null,panelAcik=false;
 let muvekkiller=[],aktifMuvekkil=null;
 let aktifModul="icra";
 let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
-let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[];
+let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[],hEvraklar=[];
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[];
 
@@ -1321,7 +1333,7 @@ async function hukukYukle(){
   if(error){hukukDavalar=[];renderHukuk();return;}
   hukukDavalar=(data||[]).map(d=>({
     id:d.id,muvekkilId:d.muvekkil_id||null,il:d.il,yargiBirimi:d.yargi_birimi,mahkemeNo:d.mahkeme_no,esasNo:d.esas_no,
-    davacilar:normTaraflar(d.davacilar),davalilar:normTaraflar(d.davalilar),
+    davacilar:normTaraflar(d.davacilar),davalilar:normTaraflar(d.davalilar),evraklar:d.evraklar?JSON.parse(d.evraklar):[],
     ucret:d.anlasilan_ucret,tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
     notlar:d.notlar,olaylar:d.olaylar?JSON.parse(d.olaylar):[],durum:d.durum||"devam",
   }));
@@ -1396,6 +1408,36 @@ function renderTaraflar(){
   document.getElementById("h-davali-list").innerHTML=hDavalilar.map((t,i)=>tarafChip(t,"davali",i)).join("");
   hukukBaslikGuncelle();
 }
+function formatBoyut(b){if(!b)return"";const kb=b/1024;return kb>1024?(kb/1024).toFixed(1)+" MB":Math.max(1,Math.round(kb))+" KB";}
+function evrakIkon(ad){const e=(ad||"").split(".").pop().toLowerCase();return e==="pdf"?"📕":e==="docx"?"📘":e==="udf"?"📄":"📎";}
+async function evrakYukleBtn(){
+  const inp=document.getElementById("h-evrak-file");
+  const f=inp.files&&inp.files[0];
+  if(!f){toast("Önce bir dosya seç");return;}
+  const ext=(f.name.split(".").pop()||"").toLowerCase();
+  if(!["pdf","docx","udf"].includes(ext)){toast("Yalnızca PDF, DOCX veya UDF");return;}
+  const durum=document.getElementById("h-evrak-durum");durum.textContent="⏳ Yükleniyor...";
+  const safe=f.name.replace(/[^\w.\-]+/g,"_");
+  const path="hukuk/"+Date.now()+"_"+safe;
+  const{error}=await db.storage.from("evraklar").upload(path,f,{upsert:false,contentType:f.type||"application/octet-stream"});
+  if(error){durum.textContent="PDF, DOCX veya UDF dosyası yükleyebilirsin.";toast("❌ Yüklenemedi: "+error.message);return;}
+  hEvraklar.push({ad:f.name,path:path,tarih:bugun(),boyut:f.size});
+  inp.value="";durum.textContent="✅ Yüklendi. Değişikliği kalıcı yapmak için formu Kaydet.";
+  renderEvrak();
+}
+function renderEvrak(){
+  const el=document.getElementById("h-evrak-list");if(!el)return;
+  el.innerHTML=hEvraklar.map((e,i)=>`<div class="taraf-chip"><span>${evrakIkon(e.ad)}</span><b>${e.ad}</b><small style="color:#94a3b8">${e.tarih?formatDate(e.tarih):""}${e.boyut?" · "+formatBoyut(e.boyut):""}</small><span class="tc-spacer"></span><button type="button" title="İndir" onclick="evrakIndirForm(${i})">⬇️</button><button type="button" title="Kaldır" onclick="evrakSil(${i})">✕</button></div>`).join("");
+}
+function evrakSil(i){hEvraklar.splice(i,1);renderEvrak();toast("Evrak listeden kaldırıldı, kaydetmeyi unutma");}
+async function _evrakIndir(e){
+  if(!e)return;
+  const{data,error}=await db.storage.from("evraklar").createSignedUrl(e.path,120,{download:e.ad});
+  if(error){toast("❌ İndirilemedi: "+error.message);return;}
+  window.open(data.signedUrl,"_blank");
+}
+function evrakIndirForm(i){_evrakIndir(hEvraklar[i]);}
+function evrakIndirDetay(i){_evrakIndir((window._detayEvrak||[])[i]);}
 function hukukTahsilEkle(){
   const t=document.getElementById("h-tahsil-input").value;const tar=document.getElementById("h-tahsil-tarih").value;const a=document.getElementById("h-tahsil-aciklama").value;
   if(!t)return;
@@ -1432,8 +1474,8 @@ function hukukResetForm(){
   document.getElementById("h-durum").value="devam";
   document.getElementById("h-tahsil-tarih").value=bugun();
   document.getElementById("h-olay-tarih").value=bugun();
-  hDavacilar=[];hDavalilar=[];hTahsilatlar=[];hOlaylar=[];
-  renderTaraflar();renderHukukTahsil();renderOlaylar();
+  hDavacilar=[];hDavalilar=[];hTahsilatlar=[];hOlaylar=[];hEvraklar=[];
+  renderTaraflar();renderHukukTahsil();renderOlaylar();renderEvrak();
 }
 function openYeniHukuk(){hukukEditId=null;hukukResetForm();hukukBaslikGuncelle();uyapFormReset("hukuk-form-modal");document.getElementById("hukuk-form-modal").style.display="flex";}
 function openHukukDuzenle(id){
@@ -1447,8 +1489,8 @@ function openHukukDuzenle(id){
   document.getElementById("h-durum").value=d.durum||"devam";
   document.getElementById("h-ucret").value=d.ucret||"";
   document.getElementById("h-notlar").value=d.notlar||"";
-  hDavacilar=[...(d.davacilar||[])];hDavalilar=[...(d.davalilar||[])];hTahsilatlar=[...(d.tahsilatlar||[])];hOlaylar=[...(d.olaylar||[])];
-  renderTaraflar();renderHukukTahsil();renderOlaylar();
+  hDavacilar=[...(d.davacilar||[])];hDavalilar=[...(d.davalilar||[])];hTahsilatlar=[...(d.tahsilatlar||[])];hOlaylar=[...(d.olaylar||[])];hEvraklar=[...(d.evraklar||[])];
+  renderTaraflar();renderHukukTahsil();renderOlaylar();renderEvrak();
   hukukBaslikGuncelle();
   uyapFormReset("hukuk-form-modal");
   document.getElementById("hukuk-form-modal").style.display="flex";
@@ -1467,6 +1509,7 @@ async function hukukKaydet(){
     tahsilatlar:JSON.stringify(hTahsilatlar),
     notlar:document.getElementById("h-notlar").value||null,
     olaylar:JSON.stringify(hOlaylar),
+    evraklar:JSON.stringify(hEvraklar),
     durum:document.getElementById("h-durum").value,
   };
   let error;
@@ -1502,6 +1545,8 @@ function openHukukDetay(id){
     ${ucret>0?kv("Kalan",`<span style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</span>`):""}
   </table><div class="lbl" style="margin:16px 0 6px">TAHSİLAT DÖKÜMÜ</div>${tahsilTablo}`;
   const p5=d.notlar?`<div style="font-size:13.5px;color:#334155;white-space:pre-wrap;line-height:1.55">${d.notlar}</div>`:`<div class="uyap-empty">Not yok</div>`;
+  const evr=d.evraklar||[];window._detayEvrak=evr;
+  const p6=evr.length?`<table class="uyap-table"><thead><tr><th>Evrak</th><th style="width:110px">Tarih</th><th style="width:100px;text-align:right">İndir</th></tr></thead><tbody>${evr.map((e,i)=>`<tr><td>${evrakIkon(e.ad)} ${e.ad}${e.boyut?` <small style="color:#94a3b8">(${formatBoyut(e.boyut)})</small>`:""}</td><td>${e.tarih?formatDate(e.tarih):"—"}</td><td style="text-align:right"><button class="btn-duzenle" style="padding:4px 10px;font-size:12px" onclick="evrakIndirDetay(${i})">⬇️ İndir</button></td></tr>`).join("")}</tbody></table>`:`<div class="uyap-empty">Evrak eklenmemiş</div>`;
   document.getElementById("hukuk-detay-icerik").innerHTML=`
     <div class="uyap-detay hukuk">
       <div class="uyap-head">
@@ -1516,12 +1561,14 @@ function openHukukDetay(id){
         <button class="uyap-tab" onclick="uyapTab(this,1)">Taraf Bilgileri</button>
         <button class="uyap-tab" onclick="uyapTab(this,2)">Safahat / Kronoloji</button>
         <button class="uyap-tab" onclick="uyapTab(this,3)">Ödeme</button>
-        <button class="uyap-tab" onclick="uyapTab(this,4)">Kişisel Notlar</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Evrak</button>
+        <button class="uyap-tab" onclick="uyapTab(this,5)">Kişisel Notlar</button>
       </div>
       <div class="uyap-panel active">${p1}</div>
       <div class="uyap-panel">${p2}</div>
       <div class="uyap-panel">${p3}</div>
       <div class="uyap-panel">${p4}</div>
+      <div class="uyap-panel">${p6}</div>
       <div class="uyap-panel">${p5}</div>
       <div class="detay-actions">
         <button class="btn-duzenle" onclick="openHukukDuzenle('${d.id}')">✏️ Düzenle</button>
