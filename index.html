@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6fb;min-height:100vh;color:#1e293b;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;letter-spacing:-0.005em;}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6fb;min-height:100vh;color:#1e293b;font-size:15px;font-weight:500;line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;letter-spacing:-0.005em;}
     input,textarea,select,button{font-family:inherit;}
     textarea{resize:vertical;}
     .header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:20px 32px;color:#fff;box-shadow:0 4px 24px rgba(0,0,0,0.15);}
@@ -52,7 +52,7 @@
     .dosya-title{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
     .dosya-title .isim{font-weight:700;font-size:15px;color:#1e293b;}
     .dosya-title .dosyano{font-family:'JetBrains Mono',monospace;font-size:13px;color:#6366f1;font-weight:600;}
-    .dosya-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#64748b;}
+    .dosya-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:#475569;font-weight:600;}
     .dosya-meta .miktar{color:#e85d4a;font-weight:700;font-size:13px;}
     .dosya-meta .tahsil{color:#22c55e;font-weight:600;}
     .tikler{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
@@ -83,7 +83,7 @@
     .tik-group{display:flex;flex-direction:column;gap:10px;}
     .tik-row{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:10px 14px;}
     .tik-row-label{font-size:13px;font-weight:600;color:#1e293b;}
-    .tik-row-sub{font-size:11px;color:#94a3b8;margin-top:2px;}
+    .tik-row-sub{font-size:11.5px;color:#64748b;margin-top:2px;font-weight:500;}
     .tik-toggle{display:flex;gap:6px;flex-wrap:wrap;}
     .tik-btn{border:1.5px solid #e2e8f0;background:#fff;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:#64748b;transition:all 0.15s;}
     .tik-btn.active-green{background:#f0fdf4;border-color:#22c55e;color:#16a34a;}
@@ -213,7 +213,7 @@
     @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.col-span-2{grid-column:1;}.detay-grid{grid-template-columns:1fr;}.header{padding:16px;}.main{padding:16px;}}
     /* İstatistik */
     .ist-title{font-size:19px;font-weight:800;color:#1e293b;margin-bottom:4px;}
-    .ist-sub{font-size:13px;color:#94a3b8;margin-bottom:18px;}
+    .ist-sub{font-size:13px;color:#64748b;margin-bottom:18px;font-weight:600;}
     .ist-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}
     .ist-kpi{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:14px 16px;}
     .ist-kpi .k-lbl{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.04em;text-transform:uppercase;}
@@ -247,7 +247,7 @@
     .form-ust .fu-meta span:empty{display:none;}
     .uyap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #eef2f7;}
     .uyap-head .u-title{font-size:16px;font-weight:800;color:#1e293b;line-height:1.35;}
-    .uyap-head .u-sub{font-size:12.5px;color:#64748b;margin-top:3px;font-family:'JetBrains Mono',monospace;}
+    .uyap-head .u-sub{font-size:13.5px;color:#334155;margin-top:4px;font-weight:700;}
     .uyap-tabs{display:flex;gap:2px;border-bottom:2px solid #e2e8f0;margin:14px 0 16px;overflow-x:auto;}
     .uyap-tab{padding:9px 15px;border:none;background:none;font-size:13.5px;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}
     .uyap-tab:hover{color:#334155;}
