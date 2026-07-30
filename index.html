@@ -368,9 +368,12 @@
 <div class="overlay" id="form-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-body">
-      <div class="form-ust">
-        <div class="fu-isim" id="fub-isim">Yeni İcra Dosyası</div>
-        <div class="fu-meta"><span id="fub-dosyano"></span><span id="fub-daire"></span></div>
+      <div class="form-ust" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div class="fu-isim" id="fub-isim">Yeni İcra Dosyası</div>
+          <div class="fu-meta"><span id="fub-dosyano"></span><span id="fub-daire"></span></div>
+        </div>
+        <button type="button" class="tik-btn" id="tik-kapali" onclick="toggleKapali()" style="padding:9px 16px;font-size:13px;flex-shrink:0">✅ Tamamlandı</button>
       </div>
       <div class="uyap-detay">
       <div class="uyap-tabs">
@@ -451,7 +454,6 @@
             <div class="tik-toggle">
               <button type="button" class="tik-btn" id="tik-kesintalep" onclick="toggleKesin('talep')">Talep Edildi</button>
               <button type="button" class="tik-btn" id="tik-kesin" onclick="toggleKesin('kesin')">Kesinleşti</button>
-              <button type="button" class="tik-btn" id="tik-kapali" onclick="toggleKapali()">✅ Tamamlandı</button>
             </div>
           </div>
         </div>
