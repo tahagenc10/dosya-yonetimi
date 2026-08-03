@@ -114,11 +114,18 @@
     .modul-btn:hover{border-color:#cbd5e1;}
     #mbtn-icra.active{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
     #mbtn-hukuk.active{background:#f0fdf4;border-color:#22c55e;color:#15803d;}
+    #mbtn-sorusturma.active{background:#fffbeb;border-color:#f59e0b;color:#b45309;}
     .htab-devam.active{color:#16a34a;}
     .htab-sonuc.active{color:#6366f1;}
+    .stab-devam.active{color:#d97706;}
+    .stab-sonuc.active{color:#6366f1;}
     /* Hukuk kartı (yeşil) */
     .dosya-card.hukuk{border-left:4px solid #22c55e;}
     .hukuk-badge{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;}
+    /* Soruşturma kartı (amber) */
+    .dosya-card.sorusturma{border-left:4px solid #f59e0b;}
+    .sorusturma-badge{background:#fffbeb;color:#b45309;border:1px solid #fde68a;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;}
+    .uyap-detay.sorusturma .uyap-tab.active{color:#b45309;border-bottom-color:#f59e0b;}
     .hukuk-taraf{font-size:12px;color:#475569;}
     /* Kronoloji / olaylar */
     .olay-ekle{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
@@ -332,6 +339,7 @@
   <div class="modul-switch">
     <button id="mbtn-icra" class="modul-btn active" onclick="setModul('icra')">📋 İcra Takipleri</button>
     <button id="mbtn-hukuk" class="modul-btn" onclick="setModul('hukuk')">⚖️ Hukuk Davaları</button>
+    <button id="mbtn-sorusturma" class="modul-btn" onclick="setModul('sorusturma')">🔍 Soruşturma</button>
   </div>
   <div class="muvekkil-bar">
     <span class="muvekkil-bar-label">👤 MÜVEKKİL</span>
@@ -361,6 +369,15 @@
       <button class="tab htab-sonuc" onclick="setHukukTab('sonuc')">✅ Sonuçlanan <span id="hcnt-sonuc"></span></button>
     </div>
     <div id="h-liste"><div style="text-align:center;padding:40px;color:#94a3b8">⏳ Yükleniyor...</div></div>
+  </div>
+
+  <div id="modul-sorusturma" style="display:none">
+    <input class="search-input" id="s-arama" placeholder="🔍  Taraf, soruşturma no veya savcılık ara..." oninput="renderSorusturma()" />
+    <div class="tabs">
+      <button class="tab stab-devam active" onclick="setSorusturmaTab('devam')">🔍 Devam Eden <span id="scnt-devam"></span></button>
+      <button class="tab stab-sonuc" onclick="setSorusturmaTab('sonuc')">✅ Sonuçlanan <span id="scnt-sonuc"></span></button>
+    </div>
+    <div id="s-liste"><div style="text-align:center;padding:40px;color:#94a3b8">⏳ Yükleniyor...</div></div>
   </div>
 </div>
 
@@ -747,6 +764,138 @@
   </div>
 </div>
 
+<!-- Soruşturma Form Modal -->
+<div class="overlay" id="sorusturma-form-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal wide" onclick="event.stopPropagation()">
+    <div class="modal-body">
+      <div class="form-ust">
+        <div class="fu-isim" id="sfub-isim">Yeni Soruşturma Dosyası</div>
+        <div class="fu-meta"><span id="sfub-no"></span><span id="sfub-savcilik"></span></div>
+      </div>
+      <div class="uyap-detay sorusturma">
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Soruşturma Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Taraflar</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Ödeme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Safahat / Kronoloji</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Evrak</button>
+        <button class="uyap-tab" onclick="uyapTab(this,5)">Kişisel Notlar</button>
+      </div>
+      <div class="uyap-panel active">
+      <div class="form-section">
+        <div class="form-section-title">SORUŞTURMA BİLGİLERİ</div>
+        <div class="form-grid">
+          <div class="field"><label>İL</label><input id="s-il" placeholder="Örn: Sakarya" oninput="sorusturmaBaslikGuncelle()" /></div>
+          <div class="field"><label>SORUŞTURMA NO</label><input id="s-no" placeholder="Örn: 2026/12345" oninput="sorusturmaBaslikGuncelle()" /></div>
+          <div class="field"><label>DURUM</label>
+            <select id="s-durum" onchange="sorusturmaBaslikGuncelle()">
+              <option value="devam">Devam Ediyor</option>
+              <option value="kyok">KYOK (Takipsizlik)</option>
+              <option value="iddianame">İddianame (Dava Açıldı)</option>
+            </select>
+          </div>
+          <div class="field col-span-2"><label>SUÇ / İSNAT</label><input id="s-suc" placeholder="Örn: Dolandırıcılık, tehdit..." /></div>
+        </div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">TARAFLAR</div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">ŞÜPHELİ(LER)</label>
+          <div id="s-supheli-list"></div>
+          <div class="olay-ekle">
+            <select id="s-supheli-tip" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa"><option value="kisi">Kişi</option><option value="kurum">Kurum</option></select>
+            <input id="s-supheli-ad" placeholder="Adı / ünvanı" style="flex:1.4;min-width:140px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();sTarafEkle('supheli')}" />
+            <input id="s-supheli-vekil" placeholder="Müdafi/Vekil (opsiyonel)" style="flex:1;min-width:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();sTarafEkle('supheli')}" />
+            <button type="button" class="btn-vekalet-ekle" onclick="sTarafEkle('supheli')">+ Ekle</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">MÜŞTEKİ / MAĞDUR(LAR)</label>
+          <div id="s-musteki-list"></div>
+          <div class="olay-ekle">
+            <select id="s-musteki-tip" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa"><option value="kisi">Kişi</option><option value="kurum">Kurum</option></select>
+            <input id="s-musteki-ad" placeholder="Adı / ünvanı" style="flex:1.4;min-width:140px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();sTarafEkle('musteki')}" />
+            <input id="s-musteki-vekil" placeholder="Vekil (opsiyonel)" style="flex:1;min-width:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" onkeydown="if(event.key==='Enter'){event.preventDefault();sTarafEkle('musteki')}" />
+            <button type="button" class="btn-vekalet-ekle" onclick="sTarafEkle('musteki')">+ Ekle</button>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">ÜCRET & TAHSİLAT</div>
+        <div class="field" style="margin-bottom:12px"><label>MÜVEKKİL İLE ANLAŞILAN ÜCRET (TL)</label><input id="s-ucret" type="number" placeholder="0.00" oninput="sorusturmaTahsilOzet()" /></div>
+        <label style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.05em;display:block;margin-bottom:8px">TAHSİLATLAR</label>
+        <div class="vekalet-list" id="s-tahsil-list"></div>
+        <div class="olay-ekle">
+          <input id="s-tahsil-input" type="number" placeholder="Tutar (TL)" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa;width:110px" />
+          <input id="s-tahsil-tarih" type="date" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 9px;font-size:13px;outline:none;background:#fafafa" />
+          <input id="s-tahsil-aciklama" placeholder="Açıklama (opsiyonel)" style="flex:1;min-width:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:13px;outline:none;background:#fafafa" />
+          <button type="button" class="btn-vekalet-ekle" onclick="sorusturmaTahsilEkle()">+ Ekle</button>
+        </div>
+        <div id="s-tahsil-ozet" style="font-size:13px;font-weight:700;text-align:right;margin-top:8px;color:#16a34a"></div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">KRONOLOJİ (OLAYLAR / GÜNCELLEMELER)</div>
+        <div class="olay-ekle">
+          <input id="s-olay-tarih" type="date" />
+          <textarea id="s-olay-aciklama" rows="2" placeholder="Ör: İfade alındı / bilirkişi / KYOK / iddianame düzenlendi..."></textarea>
+          <button type="button" class="btn-vekalet-ekle" onclick="sOlayEkle()" style="align-self:flex-start">+ Ekle</button>
+        </div>
+        <div id="s-olay-list"></div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">EVRAKLAR</div>
+        <div id="s-evrak-list"></div>
+        <div class="olay-ekle">
+          <input type="file" id="s-evrak-file" accept=".pdf,.docx,.udf" style="font-size:13px;flex:1;min-width:180px" />
+          <button type="button" class="btn-vekalet-ekle" onclick="sEvrakYukleBtn()">⬆️ Yükle</button>
+        </div>
+        <div id="s-evrak-durum" style="font-size:12px;color:#94a3b8;margin-top:8px">PDF, DOCX veya UDF dosyası yükleyebilirsin.</div>
+      </div>
+      </div>
+      <div class="uyap-panel">
+      <div class="form-section">
+        <div class="form-section-title">KİŞİSEL NOTLAR</div>
+        <div class="field"><textarea id="s-notlar" rows="3" placeholder="Bu dosyaya özel serbest notların..."></textarea></div>
+      </div>
+      </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="document.getElementById('sorusturma-form-modal').style.display='none'">İptal</button>
+        <button class="btn-save" id="s-btn-kaydet" onclick="sorusturmaKaydet()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Soruşturma Detay Modal -->
+<div class="overlay" id="sorusturma-detay-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal wide" onclick="event.stopPropagation()">
+    <div class="modal-body" id="sorusturma-detay-icerik"></div>
+  </div>
+</div>
+
+<!-- Soruşturma Silme Onayı -->
+<div class="overlay" id="sorusturma-sil-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="onay-body">
+      <h3>Bu soruşturma dosyasını silmek istediğine emin misin?</h3>
+      <p>Bu işlem geri alınamaz.</p>
+      <div class="onay-actions">
+        <button class="btn-iptal" onclick="document.getElementById('sorusturma-sil-modal').style.display='none'">İptal</button>
+        <button class="btn-sil-onay" onclick="sorusturmaSilOnayla()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL="https://xfwzoybfkcpvhcajtxcb.supabase.co";
 const SUPABASE_KEY="sb_publishable_k_dxQeABIJGL19Uwli4s4w_2RoNBlzY";
@@ -852,6 +1001,8 @@ let muvekkiller=[],aktifMuvekkil=null;
 let aktifModul="icra";
 let hukukDavalar=[],hukukAktifTab="devam",hukukEditId=null,hukukSilId=null;
 let hDavacilar=[],hDavalilar=[],hTahsilatlar=[],hOlaylar=[],hEvraklar=[];
+let sorusturmaDosyalar=[],sorusturmaAktifTab="devam",sorusturmaEditId=null,sorusturmaSilId=null;
+let sSupheliler=[],sMustekiler=[],sTahsilatlar=[],sOlaylar=[],sEvraklar=[];
 let tikTeblig=false,tik212Talep=false,tikMagdur=false,tikResit=false,tikHaricen=false,kesinDurum="";
 let vekaletler=[],tahsilatlar=[],magdurIadeler=[],ebeveynler=[];
 function ebeveynEkle(){const inp=document.getElementById("f-ebeveyn");const v=inp.value.trim();if(!v)return;ebeveynler.push(v);inp.value="";renderEbeveyn();inp.focus();}
@@ -902,7 +1053,7 @@ function muvekkilSelectDoldur(){
   sel.innerHTML=muvekkiller.map(m=>`<option value="${m.id}">${m.ad}</option>`).join("");
   if(aktifMuvekkil)sel.value=aktifMuvekkil;
 }
-function setMuvekkil(id){aktifMuvekkil=id;localStorage.setItem("aktif-muvekkil",id);render();renderHukuk();}
+function setMuvekkil(id){aktifMuvekkil=id;localStorage.setItem("aktif-muvekkil",id);render();renderHukuk();renderSorusturma();}
 // Aktif müvekkile ait dosyalar; müvekkil sistemi henüz kurulu değilse tüm dosyalar (veri kaybı olmasın)
 function aktifDosyalar(){
   if(!aktifMuvekkil||muvekkiller.length===0)return dosyalar;
@@ -940,6 +1091,7 @@ async function yukle(){
   }));
   render();
   await hukukYukle();
+  await sorusturmaYukle();
   setModul(localStorage.getItem("aktif-modul")||"icra");
 }
 
@@ -1295,7 +1447,7 @@ function openSil(id){silId=id;document.getElementById("sil-modal").style.display
 async function silOnayla(){const{error}=await db.from("dosyalar").delete().eq("id",silId);if(error){toast("❌ Silinemedi!");return;}toast("🗑️ Silindi!");document.getElementById("sil-modal").style.display="none";silId=null;await yukle();}
 
 function disaAktar(){
-  const veri=JSON.stringify({dosyalar,hukuk_davalari:hukukDavalar,muvekkiller},null,2);
+  const veri=JSON.stringify({dosyalar,hukuk_davalari:hukukDavalar,sorusturma_dosyalari:sorusturmaDosyalar,muvekkiller},null,2);
   const blob=new Blob([veri],{type:"application/json"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
@@ -1369,13 +1521,15 @@ function setModul(m){
   aktifModul=m;localStorage.setItem("aktif-modul",m);
   document.getElementById("mbtn-icra").classList.toggle("active",m==="icra");
   document.getElementById("mbtn-hukuk").classList.toggle("active",m==="hukuk");
+  document.getElementById("mbtn-sorusturma").classList.toggle("active",m==="sorusturma");
   document.getElementById("modul-icra").style.display=m==="icra"?"":"none";
   document.getElementById("modul-hukuk").style.display=m==="hukuk"?"":"none";
-  document.getElementById("btn-yeni-ana").textContent=m==="hukuk"?"+ Yeni Dava":"+ Yeni Dosya";
-  document.getElementById("btn-istatistik").style.display=m==="hukuk"?"none":"";
-  if(m==="hukuk")renderHukuk();else render();
+  document.getElementById("modul-sorusturma").style.display=m==="sorusturma"?"":"none";
+  document.getElementById("btn-yeni-ana").textContent=(m==="hukuk"?"+ Yeni Dava":m==="sorusturma"?"+ Yeni Soruşturma":"+ Yeni Dosya");
+  document.getElementById("btn-istatistik").style.display=m==="icra"?"":"none";
+  if(m==="hukuk")renderHukuk();else if(m==="sorusturma")renderSorusturma();else render();
 }
-function yeniEkle(){if(aktifModul==="hukuk")openYeniHukuk();else openYeni();}
+function yeniEkle(){if(aktifModul==="hukuk")openYeniHukuk();else if(aktifModul==="sorusturma")openYeniSorusturma();else openYeni();}
 
 async function hukukYukle(){
   const{data,error}=await db.from("hukuk_davalari").select("*").order("olusturma_tarihi",{ascending:false});
@@ -1633,6 +1787,235 @@ async function hukukSilOnayla(){
   document.getElementById("hukuk-sil-modal").style.display="none";
   if(error){toast("❌ Silinemedi: "+error.message);return;}
   toast("🗑️ Dava silindi");hukukSilId=null;await hukukYukle();
+}
+
+/* ---------- Soruşturma Modülü ---------- */
+async function sorusturmaYukle(){
+  const{data,error}=await db.from("sorusturma_dosyalari").select("*").order("olusturma_tarihi",{ascending:false});
+  if(error){sorusturmaDosyalar=[];renderSorusturma();return;}
+  sorusturmaDosyalar=(data||[]).map(d=>({
+    id:d.id,muvekkilId:d.muvekkil_id||null,il:d.il,sorusturmaNo:d.sorusturma_no,suc:d.suc,
+    supheliler:normTaraflar(d.supheliler),mustekiler:normTaraflar(d.mustekiler),
+    ucret:d.anlasilan_ucret,tahsilatlar:d.tahsilatlar?JSON.parse(d.tahsilatlar):[],
+    notlar:d.notlar,olaylar:d.olaylar?JSON.parse(d.olaylar):[],evraklar:d.evraklar?JSON.parse(d.evraklar):[],durum:d.durum||"devam",
+  }));
+  renderSorusturma();
+}
+function aktifSorusturma(){return sorusturmaDosyalar.filter(d=>!aktifMuvekkil||muvekkiller.length===0||d.muvekkilId===aktifMuvekkil);}
+function setSorusturmaTab(t){sorusturmaAktifTab=t;document.querySelectorAll("#modul-sorusturma .tab").forEach(x=>x.classList.remove("active"));document.querySelector(".stab-"+t).classList.add("active");renderSorusturma();}
+function sorusturmaSavcilik(d){return [d.il,d.il?"Cumhuriyet Başsavcılığı":""].filter(Boolean).join(" ");}
+function sorusturmaDurumMetin(d){return d.durum==="kyok"?"⛔ KYOK (Takipsizlik)":d.durum==="iddianame"?"📑 İddianame (Dava Açıldı)":"🔍 Devam Ediyor";}
+function renderSorusturma(){
+  const veri=aktifSorusturma();
+  const metin=(document.getElementById("s-arama")?.value||"").toLowerCase();
+  const cd=document.getElementById("scnt-devam"),cs=document.getElementById("scnt-sonuc");
+  if(cd)cd.textContent=`(${veri.filter(d=>(d.durum||"devam")==="devam").length})`;
+  if(cs)cs.textContent=`(${veri.filter(d=>d.durum&&d.durum!=="devam").length})`;
+  const filtered=veri.filter(d=>{
+    const hedef=[(d.supheliler||[]).map(t=>t.ad+" "+(t.vekil||"")).join(" "),(d.mustekiler||[]).map(t=>t.ad).join(" "),d.sorusturmaNo,d.il,d.suc].join(" ").toLowerCase();
+    const eslesme=!metin||hedef.includes(metin);
+    const sonuclanan=d.durum&&d.durum!=="devam";
+    return metin?eslesme:(eslesme&&(sorusturmaAktifTab==="devam"?(d.durum||"devam")==="devam":sonuclanan));
+  });
+  const el=document.getElementById("s-liste");if(!el)return;
+  if(filtered.length===0){el.innerHTML=`<div class="empty-state"><div style="font-size:36px;margin-bottom:10px">🔍</div><strong style="color:#64748b;display:block">Soruşturma bulunamadı</strong></div>`;return;}
+  el.innerHTML=`<div class="dosya-list">${filtered.map(d=>{
+    const toplamTahsil=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
+    const ucret=parseFloat(d.ucret)||0;const kalan=ucret-toplamTahsil;
+    const savc=sorusturmaSavcilik(d);
+    const baslik=`${(d.supheliler||[]).map(t=>t.ad).join(", ")||"—"} <span style="color:#94a3b8">§</span> ${(d.mustekiler||[]).map(t=>t.ad).join(", ")||"—"}`;
+    return`<div class="dosya-card sorusturma" onclick="openSorusturmaDetay('${d.id}')">
+      <div>
+        <div class="dosya-title"><span class="isim">${baslik}</span>${d.sorusturmaNo?`<span class="dosyano">${d.sorusturmaNo}</span>`:""}${d.durum&&d.durum!=="devam"?`<span class="sorusturma-badge">${sorusturmaDurumMetin(d)}</span>`:""}</div>
+        <div class="dosya-meta">
+          ${savc?`<span>🏛️ ${savc}</span>`:""}
+          ${d.suc?`<span>⚖️ ${d.suc}</span>`:""}
+          ${ucret>0?`<span class="miktar">${formatCurrency(ucret)} ücret</span>`:""}
+          ${toplamTahsil>0?`<span class="tahsil">✓ ${formatCurrency(toplamTahsil)} tahsil</span>`:""}
+          ${(ucret>0&&kalan>0)?`<span style="color:#e85d4a;font-weight:600">Kalan: ${formatCurrency(kalan)}</span>`:""}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-edit" onclick="event.stopPropagation();openSorusturmaDuzenle('${d.id}')">✏️</button>
+        <button class="btn-del" onclick="event.stopPropagation();openSorusturmaSil('${d.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+function sTarafEkle(rol){
+  const pre="s-"+rol;
+  const ad=document.getElementById(pre+"-ad").value.trim();if(!ad)return;
+  const t=document.getElementById(pre+"-tip").value;const vekil=document.getElementById(pre+"-vekil").value.trim();
+  (rol==="supheli"?sSupheliler:sMustekiler).push({tip:t,ad:ad,vekil:vekil});
+  document.getElementById(pre+"-ad").value="";document.getElementById(pre+"-vekil").value="";
+  renderSTaraflar();document.getElementById(pre+"-ad").focus();
+}
+function sTarafSil(rol,i){(rol==="supheli"?sSupheliler:sMustekiler).splice(i,1);renderSTaraflar();}
+function renderSTaraflar(){
+  document.getElementById("s-supheli-list").innerHTML=sSupheliler.map((t,i)=>`<div class="taraf-chip"><b>${t.ad}</b><small style="color:#94a3b8">${tipLabel(t.tip)}</small>${t.vekil?`<small style="color:#16a34a">Müdafi: ${t.vekil}</small>`:""}<span class="tc-spacer"></span><button type="button" onclick="sTarafSil('supheli',${i})">✕</button></div>`).join("");
+  document.getElementById("s-musteki-list").innerHTML=sMustekiler.map((t,i)=>`<div class="taraf-chip"><b>${t.ad}</b><small style="color:#94a3b8">${tipLabel(t.tip)}</small>${t.vekil?`<small style="color:#16a34a">Vekil: ${t.vekil}</small>`:""}<span class="tc-spacer"></span><button type="button" onclick="sTarafSil('musteki',${i})">✕</button></div>`).join("");
+  sorusturmaBaslikGuncelle();
+}
+function sorusturmaTahsilEkle(){
+  const t=document.getElementById("s-tahsil-input").value;const tar=document.getElementById("s-tahsil-tarih").value;const a=document.getElementById("s-tahsil-aciklama").value;
+  if(!t)return;
+  sTahsilatlar.push({tutar:parseFloat(t),tarih:tar||bugun(),aciklama:a});
+  document.getElementById("s-tahsil-input").value="";document.getElementById("s-tahsil-aciklama").value="";document.getElementById("s-tahsil-tarih").value=bugun();
+  renderSorusturmaTahsil();
+}
+function sorusturmaTahsilSil(i){sTahsilatlar.splice(i,1);renderSorusturmaTahsil();}
+function renderSorusturmaTahsil(){
+  document.getElementById("s-tahsil-list").innerHTML=sTahsilatlar.map((t,i)=>`<div class="vekalet-item"><span>${t.aciklama||"Tahsilat"}${t.tarih?` <small style="color:#94a3b8">${formatDate(t.tarih)}</small>`:""}</span><small>${formatCurrency(t.tutar)}</small><button type="button" class="btn-vekalet-sil" onclick="sorusturmaTahsilSil(${i})">✕</button></div>`).join("");
+  sorusturmaTahsilOzet();
+}
+function sorusturmaTahsilOzet(){
+  const top=sTahsilatlar.reduce((s,t)=>s+(t.tutar||0),0);const ucret=parseFloat(document.getElementById("s-ucret").value)||0;const kalan=ucret-top;
+  document.getElementById("s-tahsil-ozet").innerHTML=sTahsilatlar.length||ucret?`Tahsil edilen: ${formatCurrency(top)}${ucret>0?` · Kalan: <span style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</span>`:""}`:"";
+}
+function sOlayEkle(){
+  const tar=document.getElementById("s-olay-tarih").value;const a=document.getElementById("s-olay-aciklama").value.trim();
+  if(!a){toast("Olay açıklaması gir");return;}
+  sOlaylar.push({tarih:tar||bugun(),aciklama:a});
+  document.getElementById("s-olay-aciklama").value="";document.getElementById("s-olay-tarih").value=bugun();
+  renderSOlaylar();
+}
+function sOlaySil(i){sOlaylar.splice(i,1);renderSOlaylar();}
+function renderSOlaylar(){
+  const sirali=sOlaylar.map((o,i)=>({...o,i})).sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+  document.getElementById("s-olay-list").innerHTML=sirali.map(o=>`<div class="olay-item"><button type="button" class="o-sil" onclick="sOlaySil(${o.i})">✕</button><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join("");
+}
+async function sEvrakYukleBtn(){
+  const inp=document.getElementById("s-evrak-file");const f=inp.files&&inp.files[0];
+  if(!f){toast("Önce bir dosya seç");return;}
+  const ext=(f.name.split(".").pop()||"").toLowerCase();
+  if(!["pdf","docx","udf"].includes(ext)){toast("Yalnızca PDF, DOCX veya UDF");return;}
+  const durum=document.getElementById("s-evrak-durum");durum.textContent="⏳ Yükleniyor...";
+  const safe=f.name.replace(/[^\w.\-]+/g,"_");const path="sorusturma/"+Date.now()+"_"+safe;
+  const{error}=await db.storage.from("evraklar").upload(path,f,{upsert:false,contentType:f.type||"application/octet-stream"});
+  if(error){durum.textContent="PDF, DOCX veya UDF dosyası yükleyebilirsin.";toast("❌ Yüklenemedi: "+error.message);return;}
+  sEvraklar.push({ad:f.name,path:path,tarih:bugun(),boyut:f.size});
+  inp.value="";durum.textContent="✅ Yüklendi. Değişikliği kalıcı yapmak için formu Kaydet.";
+  renderSEvrak();
+}
+function renderSEvrak(){
+  const el=document.getElementById("s-evrak-list");if(!el)return;
+  el.innerHTML=sEvraklar.map((e,i)=>`<div class="taraf-chip"><span>${evrakIkon(e.ad)}</span><b>${e.ad}</b><small style="color:#94a3b8">${e.tarih?formatDate(e.tarih):""}${e.boyut?" · "+formatBoyut(e.boyut):""}</small><span class="tc-spacer"></span><button type="button" title="İndir" onclick="sEvrakIndirForm(${i})">⬇️</button><button type="button" title="Kaldır" onclick="sEvrakSil(${i})">✕</button></div>`).join("");
+}
+function sEvrakSil(i){sEvraklar.splice(i,1);renderSEvrak();toast("Evrak listeden kaldırıldı, kaydetmeyi unutma");}
+function sEvrakIndirForm(i){_evrakIndir(sEvraklar[i]);}
+function sEvrakIndirDetay(i){_evrakIndir((window._sDetayEvrak||[])[i]);}
+function sorusturmaBaslikGuncelle(){
+  const sup=(sSupheliler||[]).map(t=>t.ad).join(", ");const mus=(sMustekiler||[]).map(t=>t.ad).join(", ");
+  document.getElementById("sfub-isim").textContent=(sup||mus)?`${sup||"—"} § ${mus||"—"}`:"Yeni Soruşturma Dosyası";
+  const no=document.getElementById("s-no").value.trim();const il=document.getElementById("s-il").value.trim();
+  document.getElementById("sfub-no").textContent=no?("📄 "+no):"";
+  document.getElementById("sfub-savcilik").textContent=il?("🏛️ "+il+" Cumhuriyet Başsavcılığı"):"";
+}
+function sorusturmaResetForm(){
+  ["s-il","s-no","s-suc","s-ucret","s-notlar","s-supheli-ad","s-supheli-vekil","s-musteki-ad","s-musteki-vekil","s-tahsil-input","s-tahsil-aciklama","s-olay-aciklama"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("s-supheli-tip").value="kisi";document.getElementById("s-musteki-tip").value="kisi";
+  document.getElementById("s-durum").value="devam";
+  document.getElementById("s-tahsil-tarih").value=bugun();document.getElementById("s-olay-tarih").value=bugun();
+  sSupheliler=[];sMustekiler=[];sTahsilatlar=[];sOlaylar=[];sEvraklar=[];
+  renderSTaraflar();renderSorusturmaTahsil();renderSOlaylar();renderSEvrak();
+}
+function openYeniSorusturma(){sorusturmaEditId=null;sorusturmaResetForm();sorusturmaBaslikGuncelle();uyapFormReset("sorusturma-form-modal");document.getElementById("sorusturma-form-modal").style.display="flex";}
+function openSorusturmaDuzenle(id){
+  const d=sorusturmaDosyalar.find(x=>x.id===id);if(!d)return;
+  sorusturmaEditId=id;sorusturmaResetForm();
+  document.getElementById("s-il").value=d.il||"";
+  document.getElementById("s-no").value=d.sorusturmaNo||"";
+  document.getElementById("s-suc").value=d.suc||"";
+  document.getElementById("s-durum").value=d.durum||"devam";
+  document.getElementById("s-ucret").value=d.ucret||"";
+  document.getElementById("s-notlar").value=d.notlar||"";
+  sSupheliler=[...(d.supheliler||[])];sMustekiler=[...(d.mustekiler||[])];sTahsilatlar=[...(d.tahsilatlar||[])];sOlaylar=[...(d.olaylar||[])];sEvraklar=[...(d.evraklar||[])];
+  renderSTaraflar();renderSorusturmaTahsil();renderSOlaylar();renderSEvrak();
+  sorusturmaBaslikGuncelle();uyapFormReset("sorusturma-form-modal");
+  document.getElementById("sorusturma-form-modal").style.display="flex";
+  document.getElementById("sorusturma-detay-modal").style.display="none";
+}
+async function sorusturmaKaydet(){
+  const btn=document.getElementById("s-btn-kaydet");btn.textContent="Kaydediliyor...";btn.disabled=true;
+  const kayit={
+    muvekkil_id:sorusturmaEditId?(sorusturmaDosyalar.find(x=>x.id===sorusturmaEditId)?.muvekkilId||aktifMuvekkil||"alfatek"):(aktifMuvekkil||"alfatek"),
+    il:document.getElementById("s-il").value||null,
+    sorusturma_no:document.getElementById("s-no").value||null,
+    suc:document.getElementById("s-suc").value||null,
+    supheliler:JSON.stringify(sSupheliler),mustekiler:JSON.stringify(sMustekiler),
+    anlasilan_ucret:document.getElementById("s-ucret").value||null,
+    tahsilatlar:JSON.stringify(sTahsilatlar),
+    notlar:document.getElementById("s-notlar").value||null,
+    olaylar:JSON.stringify(sOlaylar),evraklar:JSON.stringify(sEvraklar),
+    durum:document.getElementById("s-durum").value,
+  };
+  let error;
+  if(sorusturmaEditId){({error}=await db.from("sorusturma_dosyalari").update(kayit).eq("id",sorusturmaEditId));}
+  else{kayit.id=Date.now().toString();({error}=await db.from("sorusturma_dosyalari").insert(kayit));}
+  btn.textContent="Kaydet";btn.disabled=false;
+  if(error){toast("❌ Hata: "+error.message);return;}
+  toast(sorusturmaEditId?"✅ Soruşturma güncellendi!":"✅ Soruşturma eklendi!");
+  document.getElementById("sorusturma-form-modal").style.display="none";
+  await sorusturmaYukle();
+}
+function openSorusturmaDetay(id){
+  const d=sorusturmaDosyalar.find(x=>x.id===id);if(!d)return;
+  const toplamTahsil=(d.tahsilatlar||[]).reduce((s,t)=>s+(parseFloat(t.tutar)||0),0);
+  const ucret=parseFloat(d.ucret)||0;const kalan=ucret-toplamTahsil;
+  const savc=sorusturmaSavcilik(d);
+  const olaySirali=[...(d.olaylar||[])].sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+  const kv=(k,v)=>`<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
+  const p1=`<table class="uyap-kv">
+    ${kv("Soruşturma No",d.sorusturmaNo||"—")}
+    ${kv("C. Başsavcılığı",savc||"—")}
+    ${kv("Suç / İsnat",d.suc||"—")}
+    ${kv("Durum",sorusturmaDurumMetin(d))}
+  </table>`;
+  const taraflar=[...(d.supheliler||[]).map(t=>({rol:"Şüpheli",...t})),...(d.mustekiler||[]).map(t=>({rol:"Müşteki",...t}))];
+  const p2=taraflar.length?`<table class="uyap-table"><thead><tr><th style="width:90px">Rol</th><th style="width:80px">Tipi</th><th>Adı / Ünvanı</th><th>Vekil / Müdafi</th></tr></thead><tbody>${taraflar.map(t=>`<tr><td><span class="uyap-rol ${t.rol==="Şüpheli"?"davali":"davaci"}">${t.rol}</span></td><td>${tipLabel(t.tip)}</td><td>${t.ad||"—"}</td><td>${t.vekil||"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="uyap-empty">Taraf eklenmemiş</div>`;
+  const p3=olaySirali.length?olaySirali.map(o=>`<div class="olay-item"><div class="o-tarih">${o.tarih?formatDate(o.tarih):""}</div><div class="o-aciklama">${o.aciklama}</div></div>`).join(""):`<div class="uyap-empty">Kronoloji kaydı yok</div>`;
+  const tahsilTablo=(d.tahsilatlar||[]).length?`<table class="uyap-table"><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${d.tahsilatlar.map(t=>`<tr><td>${t.aciklama||"Tahsilat"}</td><td>${t.tarih?formatDate(t.tarih):"—"}</td><td style="text-align:right">${formatCurrency(t.tutar)}</td></tr>`).join("")}</tbody></table><div class="uyap-total"><span>Tahsil Edilen</span><span style="color:#16a34a">${formatCurrency(toplamTahsil)}</span></div>`:`<div class="uyap-empty">Tahsilat kaydı yok</div>`;
+  const p4=`<table class="uyap-kv">${kv("Anlaşılan Ücret",ucret>0?formatCurrency(ucret):"—")}${kv("Tahsil Edilen",`<span style="color:#16a34a">${formatCurrency(toplamTahsil)}</span>`)}${ucret>0?kv("Kalan",`<span style="color:${kalan>0?"#e85d4a":"#16a34a"}">${formatCurrency(kalan)}</span>`):""}</table><div class="lbl" style="margin:16px 0 6px">TAHSİLAT DÖKÜMÜ</div>${tahsilTablo}`;
+  const evr=d.evraklar||[];window._sDetayEvrak=evr;
+  const p5=evr.length?`<table class="uyap-table"><thead><tr><th>Evrak</th><th style="width:110px">Tarih</th><th style="width:100px;text-align:right">İndir</th></tr></thead><tbody>${evr.map((e,i)=>`<tr><td>${evrakIkon(e.ad)} ${e.ad}${e.boyut?` <small style="color:#94a3b8">(${formatBoyut(e.boyut)})</small>`:""}</td><td>${e.tarih?formatDate(e.tarih):"—"}</td><td style="text-align:right"><button class="btn-duzenle" style="padding:4px 10px;font-size:12px" onclick="sEvrakIndirDetay(${i})">⬇️ İndir</button></td></tr>`).join("")}</tbody></table>`:`<div class="uyap-empty">Evrak eklenmemiş</div>`;
+  const p6=d.notlar?`<div style="font-size:13.5px;color:#334155;white-space:pre-wrap;line-height:1.55">${d.notlar}</div>`:`<div class="uyap-empty">Not yok</div>`;
+  document.getElementById("sorusturma-detay-icerik").innerHTML=`
+    <div class="uyap-detay sorusturma">
+      <div class="uyap-head">
+        <div>
+          <div class="u-title">${(d.supheliler||[]).map(t=>t.ad).join(", ")||"—"} <span style="color:#94a3b8">§</span> ${(d.mustekiler||[]).map(t=>t.ad).join(", ")||"—"} <span class="sorusturma-badge">${sorusturmaDurumMetin(d)}</span></div>
+          <div class="u-sub">${d.sorusturmaNo?d.sorusturmaNo:""}${savc?` · ${savc}`:""}</div>
+        </div>
+        <button class="btn-close" onclick="document.getElementById('sorusturma-detay-modal').style.display='none'">✕</button>
+      </div>
+      <div class="uyap-tabs">
+        <button class="uyap-tab active" onclick="uyapTab(this,0)">Soruşturma Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,1)">Taraf Bilgileri</button>
+        <button class="uyap-tab" onclick="uyapTab(this,2)">Safahat / Kronoloji</button>
+        <button class="uyap-tab" onclick="uyapTab(this,3)">Ödeme</button>
+        <button class="uyap-tab" onclick="uyapTab(this,4)">Evrak</button>
+        <button class="uyap-tab" onclick="uyapTab(this,5)">Kişisel Notlar</button>
+      </div>
+      <div class="uyap-panel active">${p1}</div>
+      <div class="uyap-panel">${p2}</div>
+      <div class="uyap-panel">${p3}</div>
+      <div class="uyap-panel">${p4}</div>
+      <div class="uyap-panel">${p5}</div>
+      <div class="uyap-panel">${p6}</div>
+      <div class="detay-actions">
+        <button class="btn-duzenle" onclick="openSorusturmaDuzenle('${d.id}')">✏️ Düzenle</button>
+        <button class="btn-sil2" onclick="openSorusturmaSil('${d.id}')">🗑️ Sil</button>
+      </div>
+    </div>`;
+  document.getElementById("sorusturma-detay-modal").style.display="flex";
+}
+function openSorusturmaSil(id){sorusturmaSilId=id;document.getElementById("sorusturma-sil-modal").style.display="flex";document.getElementById("sorusturma-detay-modal").style.display="none";}
+async function sorusturmaSilOnayla(){
+  if(!sorusturmaSilId)return;
+  const{error}=await db.from("sorusturma_dosyalari").delete().eq("id",sorusturmaSilId);
+  document.getElementById("sorusturma-sil-modal").style.display="none";
+  if(error){toast("❌ Silinemedi: "+error.message);return;}
+  toast("🗑️ Soruşturma silindi");sorusturmaSilId=null;await sorusturmaYukle();
 }
 
 authInit();
